@@ -511,6 +511,7 @@
         input[type="number"],
         input[type="tel"],
         input[type="date"],
+        input[type="time"],
         input[type="email"],
         input[type="password"],
         select,
@@ -2059,12 +2060,13 @@
                         </div>
                         <div class="form-grid">
                             <div class="form-group"><label>Sample Date *</label><input type="date" id="sampleDate" required /></div>
+                            <div class="form-group"><label>Sample Time *</label><input type="time" id="sampleTime" required /></div>
                             <div class="form-group"><label>Sample Type *</label>
                                 <select id="sampleType" required>
                                     <option value="">Select type</option>
                                     <option value="Blood">Blood</option><option value="Tissue">Tissue</option>
                                     <option value="Saliva">Saliva</option><option value="Urine">Urine</option>
-                                    
+                                   
                                 </select>
                             </div>
                         </div>
@@ -2083,15 +2085,6 @@
                             <div class="payment-option" onclick="selectPayment('online')"><div class="icon">💳</div><div><strong>Online Transfer</strong></div></div>
                         </div>
                         <input type="hidden" id="paymentMethod" required />
-
-                        <div id="bankDetails" class="payment-details">
-                            <div class="form-grid">
-                                <div class="form-group"><label>Account Name</label><input type="text" id="accName" placeholder="Enter account name" /></div>
-                                <div class="form-group"><label>Account Number</label><input type="text" id="accNumber" placeholder="Enter account number" /></div>
-                                <div class="form-group"><label>Branch</label><input type="text" id="branch" placeholder="Enter branch" /></div>
-                                <div class="form-group"><label>Bank Code</label><input type="text" id="bankCode" placeholder="Enter bank code" /></div>
-                            </div>
-                        </div>
 
                         <div class="form-group" style="margin-top:1rem;">
                             <label>Total Amount (Rs.) *</label>
@@ -2116,7 +2109,7 @@
                     </div>
                     <div class="table-container">
                         <table id="patientsTable">
-                            <thead><tr><th>ID</th><th>Name</th><th>Age/Gender</th><th>Mobile</th><th>Sample</th><th>Date</th><th>Amount</th><th>Payment</th><th>Paid</th><th>Report</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Name</th><th>Age/Gender</th><th>Mobile</th><th>Sample</th><th>Date/Time</th><th>Amount</th><th>Payment</th><th>Paid</th><th>Report</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody id="patientsTableBody"></tbody>
                         </table>
                     </div>
@@ -2140,7 +2133,7 @@
                     </div>
                     <div class="table-container">
                         <table id="samplesTable">
-                            <thead><tr><th>Sample ID</th><th>Patient ID</th><th>Patient Name</th><th>Type</th><th>Date</th><th>Amount</th><th>Payment</th><th>Paid</th><th>Report</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>Sample ID</th><th>Patient ID</th><th>Patient Name</th><th>Type</th><th>Date/Time</th><th>Amount</th><th>Payment</th><th>Paid</th><th>Report</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody id="samplesTableBody"></tbody>
                         </table>
                     </div>
@@ -2256,7 +2249,6 @@
                             <div class="radio-group">
                                 <label class="radio-label"><input type="radio" name="editGender" value="Male" /> Male</label>
                                 <label class="radio-label"><input type="radio" name="editGender" value="Female" /> Female</label>
-                                <label class="radio-label"><input type="radio" name="editGender" value="Other" /> Other</label>
                             </div>
                         </div>
                         <div class="form-group"><label>NIC</label><input type="text" id="editPatientNIC" placeholder="Enter NIC" /></div>
@@ -2271,10 +2263,11 @@
                             <select id="editSampleType">
                                 <option value="Blood">Blood</option><option value="Tissue">Tissue</option>
                                 <option value="Saliva">Saliva</option><option value="Urine">Urine</option>
-                                
+                              
                             </select>
                         </div>
                         <div class="form-group"><label>Sample Date</label><input type="date" id="editSampleDate" /></div>
+                        <div class="form-group"><label>Sample Time</label><input type="time" id="editSampleTime" /></div>
                     </div>
 
                     <div class="card" style="margin-top:1rem;">
@@ -2338,14 +2331,35 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        // ===== SUPABASE CONFIGURATION =====
-        // ⚠️ IMPORTANT: Replace with your actual Supabase credentials
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
         const SUPABASE_URL = 'https://xazoagpcgxnszacurcsp.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_8I3ZkjLBYvPWX_WrlKtNIg_dv9wJaVK';
         
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+        // ============================================================
+        // AUTO-INCREMENT COUNTERS (stored in localStorage for persistence)
+        // ============================================================
+        function getNextPatientId() {
+            let counter = parseInt(localStorage.getItem('slibtec_patient_counter') || '0');
+            counter++;
+            localStorage.setItem('slibtec_patient_counter', String(counter));
+            return 'SLIBTECPAT' + String(counter).padStart(5, '0');
+        }
+
+        function getNextSampleId() {
+            let counter = parseInt(localStorage.getItem('slibtec_sample_counter') || '0');
+            counter++;
+            localStorage.setItem('slibtec_sample_counter', String(counter));
+            return 'SLIBTECSAM' + String(counter).padStart(5, '0');
+        }
+
+        // ============================================================
+        // GLOBALS
+        // ============================================================
         const ADMIN_USERNAME = 'admin@slibtec.com';
         const ADMIN_PASSWORD = 'slibtec12345';
 
@@ -2383,7 +2397,9 @@
             });
         }
 
-        // ===== MOBILE NAV =====
+        // ============================================================
+        // MOBILE NAV
+        // ============================================================
         function toggleMobileNav() {
             const links = document.getElementById('navLinks');
             const btn = document.getElementById('hamburgerBtn');
@@ -2400,7 +2416,9 @@
             });
         });
 
-        // ===== PASSWORD TOGGLE =====
+        // ============================================================
+        // PASSWORD TOGGLE
+        // ============================================================
         function togglePassword(inputId, btn) {
             const input = document.getElementById(inputId);
             if (input.type === 'password') {
@@ -2412,7 +2430,9 @@
             }
         }
 
-        // ===== AUTH =====
+        // ============================================================
+        // AUTH
+        // ============================================================
         function switchAuthTab(tab) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
@@ -2589,7 +2609,9 @@
             document.getElementById('hamburgerBtn').classList.remove('active');
         }
 
-        // ===== PATIENT SEARCH =====
+        // ============================================================
+        // PATIENT SEARCH
+        // ============================================================
         function searchExistingPatient() {
             const query = document.getElementById('patientSearch').value.trim().toLowerCase();
             const resultsContainer = document.getElementById('patientSearchResults');
@@ -2667,7 +2689,9 @@
             document.getElementById('patientIdDisplay').style.color = '';
         }
 
-        // ===== TESTS =====
+        // ============================================================
+        // TESTS
+        // ============================================================
         async function loadTests() {
             try {
                 const { data, error } = await supabaseClient
@@ -2866,7 +2890,9 @@
             }
         }
 
-        // ===== PATIENTS =====
+        // ============================================================
+        // PATIENTS
+        // ============================================================
         async function loadPatients() {
             try {
                 let query = supabaseClient
@@ -2909,11 +2935,12 @@
                 return;
             }
             let html =
-                `<div style="margin-bottom:1.5rem;"><p><strong>Name:</strong> ${currentUserData?.name||'N/A'}</p><p><strong>Email:</strong> ${currentUserData?.email||'N/A'}</p><p><strong>Role:</strong> ${currentUserData?.role||'N/A'}</p><p><strong>Total Tests:</strong> ${userPatients.length}</p></div><div class="table-container"><table><thead><tr><th>Patient ID</th><th>Name</th><th>Test</th><th>Date</th><th>Amount</th><th>Paid</th><th>Report</th><th>Status</th></tr></thead><tbody>`;
+                `<div style="margin-bottom:1.5rem;"><p><strong>Name:</strong> ${currentUserData?.name||'N/A'}</p><p><strong>Email:</strong> ${currentUserData?.email||'N/A'}</p><p><strong>Role:</strong> ${currentUserData?.role||'N/A'}</p><p><strong>Total Tests:</strong> ${userPatients.length}</p></div><div class="table-container"><table><thead><tr><th>Patient ID</th><th>Name</th><th>Test</th><th>Date/Time</th><th>Amount</th><th>Paid</th><th>Report</th><th>Status</th></tr></thead><tbody>`;
             userPatients.forEach(p => {
                 const tests = p.tests || [];
+                const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : 'N/A';
                 html +=
-                    `<tr><td>${p.patient_id||'N/A'}</td><td>${p.patient_name||'N/A'}</td><td>${tests.join(', ')||'N/A'}</td><td>${p.sample_date||'N/A'}</td><td>${formatPrice(p.total_amount)}</td><td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td><td><span class="badge ${p.report_delivered?'badge-success':'badge-warning'}">${p.report_delivered?'📬 Delivered':'⏳ Pending'}</span></td><td><span class="badge ${p.status==='Completed'?'badge-success':'badge-warning'}">${p.status||'Pending'}</span></td></tr>`;
+                    `<tr><td>${p.patient_id||'N/A'}</td><td>${p.patient_name||'N/A'}</td><td>${tests.join(', ')||'N/A'}</td><td>${dateTime}</td><td>${formatPrice(p.total_amount)}</td><td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td><td><span class="badge ${p.report_delivered?'badge-success':'badge-warning'}">${p.report_delivered?'📬 Delivered':'⏳ Pending'}</span></td><td><span class="badge ${p.status==='Completed'?'badge-success':'badge-warning'}">${p.status||'Pending'}</span></td></tr>`;
             });
             html += `</tbody></table></div>`;
             container.innerHTML = html;
@@ -2947,7 +2974,9 @@
             }
         }
 
-        // ===== PATIENTS TABLE =====
+        // ============================================================
+        // PATIENTS TABLE
+        // ============================================================
         function renderPatientsTable(filter = '') {
             const tbody = document.getElementById('patientsTableBody');
             if (!tbody) return;
@@ -2965,14 +2994,16 @@
                     `<tr><td colspan="13" style="text-align:center;padding:2rem;color:var(--text-light);">No patients found</td></tr>`;
                 return;
             }
-            tbody.innerHTML = filtered.map(p => `
+            tbody.innerHTML = filtered.map(p => {
+                const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : 'N/A';
+                return `
                 <tr>
                     <td><strong>${p.patient_id||'N/A'}</strong></td>
                     <td>${p.patient_name||'N/A'}</td>
                     <td>${p.age||'N/A'}/${p.gender||'N/A'}</td>
                     <td>${p.mobile||'N/A'}</td>
                     <td>${p.sample_type||'N/A'}</td>
-                    <td>${p.sample_date||'N/A'}</td>
+                    <td>${dateTime}</td>
                     <td>${formatPrice(p.total_amount)}</td>
                     <td>${p.payment_method||'N/A'}</td>
                     <td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td>
@@ -2992,14 +3023,16 @@
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function searchPatients() {
             renderPatientsTable(document.getElementById('searchInput').value);
         }
 
-        // ===== SAMPLES TABLE =====
+        // ============================================================
+        // SAMPLES TABLE
+        // ============================================================
         function renderSamplesTable(filter = '') {
             const tbody = document.getElementById('samplesTableBody');
             if (!tbody) return;
@@ -3024,13 +3057,15 @@
                     `<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--text-light);">No samples found</td></tr>`;
                 return;
             }
-            tbody.innerHTML = filtered.map(p => `
+            tbody.innerHTML = filtered.map(p => {
+                const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : 'N/A';
+                return `
                 <tr>
                     <td><strong>${p.sample_id||'N/A'}</strong></td>
                     <td>${p.patient_id||'N/A'}</td>
                     <td>${p.patient_name||'N/A'}</td>
                     <td>${p.sample_type||'N/A'}</td>
-                    <td>${p.sample_date||'N/A'}</td>
+                    <td>${dateTime}</td>
                     <td>${formatPrice(p.total_amount)}</td>
                     <td>${p.payment_method||'N/A'}</td>
                     <td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td>
@@ -3049,7 +3084,7 @@
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function searchSamples() {
@@ -3060,7 +3095,9 @@
             renderSamplesTable(document.getElementById('sampleSearchInput').value);
         }
 
-        // ===== REPORTS =====
+        // ============================================================
+        // REPORTS
+        // ============================================================
         async function loadUploadedReports() {
             try {
                 const { data, error } = await supabaseClient
@@ -3116,7 +3153,8 @@
                 const option = document.createElement('option');
                 option.value = p.sample_id;
                 const hasReport = uploadedReports.some(f => f.name.includes(p.sample_id));
-                option.textContent = `${p.sample_id} - ${p.patient_name} (${p.sample_date})${hasReport ? ' ✅ Has Report' : ''}`;
+                const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : '';
+                option.textContent = `${p.sample_id} - ${p.patient_name} (${dateTime})${hasReport ? ' ✅ Has Report' : ''}`;
                 option.dataset.patientId = p.patient_id;
                 select.appendChild(option);
             });
@@ -3287,7 +3325,9 @@
             }
         }
 
-        // ===== EDIT PATIENT MODAL =====
+        // ============================================================
+        // EDIT PATIENT MODAL
+        // ============================================================
         function renderEditTestGrid() {
             const grid = document.getElementById('editTestGrid');
             if (!grid) return;
@@ -3340,6 +3380,7 @@
             document.getElementById('editClinicalPresentation').value = patient.clinical_presentation || '';
             document.getElementById('editSampleType').value = patient.sample_type || 'Blood';
             document.getElementById('editSampleDate').value = patient.sample_date || '';
+            document.getElementById('editSampleTime').value = patient.sample_time || '';
             document.getElementById('editPaymentMethod').value = patient.payment_method || 'cash';
             document.getElementById('editStatus').value = patient.status || 'Pending';
             document.getElementById('editPaid').value = patient.paid ? 'true' : 'false';
@@ -3400,6 +3441,7 @@
                 clinical_presentation: document.getElementById('editClinicalPresentation').value.trim(),
                 sample_type: document.getElementById('editSampleType').value,
                 sample_date: document.getElementById('editSampleDate').value,
+                sample_time: document.getElementById('editSampleTime').value,
                 tests: selectedTests,
                 total_amount: totalAmount,
                 payment_method: document.getElementById('editPaymentMethod').value,
@@ -3446,7 +3488,9 @@
             }
         }
 
-        // ===== DELETE PATIENT =====
+        // ============================================================
+        // DELETE PATIENT
+        // ============================================================
         async function deletePatient(patientId) {
             const patient = patients.find(p => p.patient_id === patientId);
             if (!patient) return;
@@ -3471,7 +3515,9 @@
             }
         }
 
-        // ===== TOGGLE PAYMENT =====
+        // ============================================================
+        // TOGGLE PAYMENT
+        // ============================================================
         async function togglePayment(patientId) {
             const patient = patients.find(p => p.patient_id === patientId);
             if (!patient) return;
@@ -3495,7 +3541,9 @@
             }
         }
 
-        // ===== TOGGLE DELIVERY =====
+        // ============================================================
+        // TOGGLE DELIVERY
+        // ============================================================
         async function toggleDelivery(patientId) {
             const patient = patients.find(p => p.patient_id === patientId);
             if (!patient) return;
@@ -3519,7 +3567,9 @@
             }
         }
 
-        // ===== FORM =====
+        // ============================================================
+        // FORM SUBMIT
+        // ============================================================
         function handleAgeChange() {
             const age = parseInt(document.getElementById('patientAge').value);
             const nicGroup = document.getElementById('nicGroup');
@@ -3550,19 +3600,19 @@
                     el.classList.add('selected');
                 }
             });
-            document.getElementById('bankDetails').classList.toggle('active', method === 'online');
+            // Remove bank details for online payment - we're hiding them completely
+            document.getElementById('bankDetails')?.classList.remove('active');
         }
 
         async function handleSubmit(e) {
             e.preventDefault();
             
-            let patientId;
-            let isExistingPatient = false;
-            
-            if (selectedExistingPatient) {
-                patientId = selectedExistingPatient.patient_id;
-                isExistingPatient = true;
-            }
+            // Generate auto-incremented IDs
+            const patientId = getNextPatientId();
+            const sampleId = getNextSampleId();
+
+            // Get current date/time for details filled timestamp
+            const detailsFilledTime = new Date().toISOString();
 
             const patientName = document.getElementById('patientName').value.trim();
             const age = parseInt(document.getElementById('patientAge').value);
@@ -3576,21 +3626,33 @@
             const consultant = document.getElementById('consultantName').value.trim();
             const clinical = document.getElementById('clinicalPresentation').value.trim();
             const sampleDate = document.getElementById('sampleDate').value;
+            const sampleTime = document.getElementById('sampleTime').value;
             const sampleType = document.getElementById('sampleType').value;
             const tests = Array.from(document.querySelectorAll('input[name="tests"]:checked')).map(cb => cb.value);
             const totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
             const paymentMethod = document.getElementById('paymentMethod').value;
 
-            if (!paymentMethod) { showToast('Please select a payment method', 'error'); return; }
-            if (age < 20 && nic) { showToast('NIC is not required for patients below 20 years', 'warning'); return; }
+            if (!patientName) { showToast('Please enter patient name', 'error'); return; }
+            if (!age || age < 0) { showToast('Please enter valid age', 'error'); return; }
+            if (!gender) { showToast('Please select gender', 'error'); return; }
             if (age >= 20 && !nic) { showToast('NIC is required for patients 20 years or older', 'error'); return; }
+            if (!dob) { showToast('Please select date of birth', 'error'); return; }
+            if (!mobile) { showToast('Please enter mobile number', 'error'); return; }
+            if (!address) { showToast('Please enter address', 'error'); return; }
+            if (!hospital) { showToast('Please enter hospital name', 'error'); return; }
+            if (!department) { showToast('Please enter department', 'error'); return; }
+            if (!consultant) { showToast('Please enter consultant name', 'error'); return; }
+            if (!clinical) { showToast('Please enter clinical presentation', 'error'); return; }
+            if (!sampleDate) { showToast('Please select sample date', 'error'); return; }
+            if (!sampleTime) { showToast('Please select sample time', 'error'); return; }
+            if (!sampleType) { showToast('Please select sample type', 'error'); return; }
             if (tests.length === 0) { showToast('Please select at least one test', 'error'); return; }
+            if (!paymentMethod) { showToast('Please select a payment method', 'error'); return; }
 
-            const sampleId = 'SMP-' + Date.now();
             const createdBy = currentUser?.uid || generateUUID();
 
             const patientData = {
-                patient_id: isExistingPatient ? patientId : ('PAT-' + Date.now()),
+                patient_id: patientId,
                 sample_id: sampleId,
                 patient_name: patientName,
                 age,
@@ -3604,6 +3666,7 @@
                 consultant,
                 clinical_presentation: clinical,
                 sample_date: sampleDate,
+                sample_time: sampleTime,
                 sample_type: sampleType,
                 tests,
                 total_amount: totalAmount,
@@ -3613,10 +3676,7 @@
                 report_delivered: false,
                 created_by: createdBy,
                 created_at: new Date().toISOString(),
-                acc_name: document.getElementById('accName').value.trim(),
-                acc_number: document.getElementById('accNumber').value.trim(),
-                branch: document.getElementById('branch').value.trim(),
-                bank_code: document.getElementById('bankCode').value.trim()
+                details_filled_time: detailsFilledTime
             };
 
             try {
@@ -3625,9 +3685,32 @@
                     .insert([patientData])
                     .select()
                     .single();
-                if (error) throw error;
-                patients.unshift(data);
-                showToast(isExistingPatient ? 'New sample added successfully!' : 'Patient registered successfully!', 'success');
+                    
+                if (error) {
+                    // If column doesn't exist, try without details_filled_time
+                    if (error.message && error.message.includes('details_filled_time')) {
+                        console.warn('details_filled_time column not found, saving without it');
+                        delete patientData.details_filled_time;
+                        
+                        const { data: retryData, error: retryError } = await supabaseClient
+                            .from('patients')
+                            .insert([patientData])
+                            .select()
+                            .single();
+                            
+                        if (retryError) throw retryError;
+                        
+                        // Store the timestamp locally for display
+                        retryData.details_filled_time = detailsFilledTime;
+                        patients.unshift(retryData);
+                        showToast('Patient registered successfully! Patient ID: ' + patientId, 'success');
+                    } else {
+                        throw error;
+                    }
+                } else {
+                    patients.unshift(data);
+                    showToast('Patient registered successfully! Patient ID: ' + patientId, 'success');
+                }
                 
                 resetForm();
                 updateDashboard();
@@ -3635,8 +3718,16 @@
                 renderSamplesTable();
                 renderProfile();
                 populateReportSelect();
-                currentPatient = data;
-                viewPatient(patientData.patient_id);
+                if (data) {
+                    currentPatient = data;
+                    viewPatient(patientId);
+                } else {
+                    const newPatient = patients.find(p => p.patient_id === patientId);
+                    if (newPatient) {
+                        currentPatient = newPatient;
+                        viewPatient(patientId);
+                    }
+                }
             } catch (error) {
                 console.error('Save error:', error);
                 showToast('Error saving patient: ' + error.message, 'error');
@@ -3648,7 +3739,6 @@
             document.getElementById('totalAmount').value = '';
             document.getElementById('testTotalAmount').textContent = 'Rs. 0.00';
             document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById('bankDetails').classList.remove('active');
             document.getElementById('paymentMethod').value = '';
             document.querySelectorAll('.test-checkbox').forEach(el => el.classList.remove('checked'));
             document.getElementById('patientIdDisplay').textContent = 'ID: Auto';
@@ -3662,14 +3752,43 @@
             
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('sampleDate').value = today;
+            document.getElementById('sampleTime').value = new Date().toTimeString().slice(0,5);
         }
 
-        // ===== REPORT HTML =====
+        // ============================================================
+        // REPORT HTML
+        // ============================================================
         function generateReportHTML(patient) {
             const statusClass = patient.status === 'Completed' ? 'success' :
                 patient.status === 'Collected' ? 'primary' : 'warning';
             const testCount = (patient.tests || []).length || 1;
             const perTestPrice = (patient.total_amount / testCount);
+            
+            // Format details filled time
+            const detailsTime = patient.details_filled_time ? new Date(patient.details_filled_time) : new Date();
+            const formattedDetailsTime = detailsTime.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+
+            const registeredDate = patient.created_at ? new Date(patient.created_at) : new Date();
+            const formattedRegistered = registeredDate.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+
+            const dateTime = patient.sample_date ? patient.sample_date + (patient.sample_time ? ' at ' + patient.sample_time : '') : 'N/A';
+
             return `
                 <div class="report-preview">
                     <div class="report-header">
@@ -3680,7 +3799,9 @@
                             <span class="status-badge ${patient.paid?'success':'danger'}" style="margin-left:0.5rem;">${patient.paid?'✅ Paid':'❌ Unpaid'}</span>
                             <span class="status-badge ${patient.report_delivered?'success':'warning'}" style="margin-left:0.5rem;">${patient.report_delivered?'📬 Delivered':'⏳ Pending'}</span>
                         </div>
-                        <div style="margin-top:0.3rem;font-size:0.85rem;color:#546e7a;">Report Date: ${new Date().toLocaleDateString()}</div>
+                        <div style="margin-top:0.3rem;font-size:0.85rem;color:#546e7a;">
+                            Details Filled: ${formattedDetailsTime} | Registered: ${formattedRegistered}
+                        </div>
                     </div>
                     <div class="report-section"><h3>Patient Information</h3>
                         <div class="report-grid">
@@ -3699,7 +3820,8 @@
                     <div class="report-section"><h3>Sample Details</h3>
                         <div class="report-grid">
                             <div class="report-item"><strong>Type:</strong> <span class="value">${patient.sample_type}</span></div>
-                            <div class="report-item"><strong>Date:</strong> <span class="value">${patient.sample_date}</span></div>
+                            <div class="report-item"><strong>Date & Time:</strong> <span class="value">${dateTime}</span></div>
+                            <div class="report-item"><strong>Details Filled Time:</strong> <span class="value">${formattedDetailsTime}</span></div>
                         </div>
                     </div>
                     <div class="report-section"><h3>Tests Performed</h3>
@@ -3710,12 +3832,6 @@
                         <div class="report-grid">
                             <div class="report-item"><strong>Method:</strong> <span class="value">${patient.payment_method}</span></div>
                             <div class="report-item"><strong>Status:</strong> <span class="value">${patient.paid?'✅ Paid':'❌ Unpaid'}</span></div>
-                            ${patient.payment_method==='online'?`
-                                <div class="report-item"><strong>Account:</strong> <span class="value">${patient.acc_name||''}</span></div>
-                                <div class="report-item"><strong>Account No:</strong> <span class="value">${patient.acc_number||''}</span></div>
-                                <div class="report-item"><strong>Branch:</strong> <span class="value">${patient.branch||''}</span></div>
-                                <div class="report-item"><strong>Bank Code:</strong> <span class="value">${patient.bank_code||''}</span></div>
-                            `:''}
                         </div>
                     </div>
                     <div class="report-section"><h3>Report Delivery</h3><p><strong>Status:</strong> ${patient.report_delivered?'📬 Delivered':'⏳ Pending'}</p></div>
@@ -3725,7 +3841,9 @@
             `;
         }
 
-        // ===== VIEW PATIENT =====
+        // ============================================================
+        // VIEW PATIENT
+        // ============================================================
         function viewPatient(patientId) {
             const patient = patients.find(p => p.patient_id === patientId);
             if (!patient) { showToast('Patient not found', 'error'); return; }
@@ -3740,7 +3858,9 @@
             document.getElementById('patientModal').classList.remove('active');
         }
 
-        // ===== PDF =====
+        // ============================================================
+        // PDF GENERATION
+        // ============================================================
         async function generatePDF() {
             if (!currentPatient) { showToast('No patient selected', 'error'); return; }
             showToast('Generating PDF...', 'info');
@@ -3782,7 +3902,9 @@
                 generatePDF(); } else { showToast('Patient not found', 'error'); }
         }
 
-        // ===== BARCODE (uses Sample ID) =====
+        // ============================================================
+        // BARCODE
+        // ============================================================
         function generateCustomBarcode() {
             const input = document.getElementById('barcodeInput').value.trim() || 'SMP-' + Date.now();
             const type = document.getElementById('barcodeType').value;
@@ -3842,7 +3964,9 @@
             }
         }
 
-        // ===== STATUS UPDATE =====
+        // ============================================================
+        // STATUS UPDATE
+        // ============================================================
         async function updateStatus(patientId) {
             const patient = patients.find(p => p.patient_id === patientId);
             if (!patient) return;
@@ -3869,16 +3993,19 @@
             }
         }
 
-        // ===== EXPORT =====
+        // ============================================================
+        // EXPORT
+        // ============================================================
         function exportData() {
             if (patients.length === 0) { showToast('No data to export', 'warning'); return; }
             const headers = ['Patient ID', 'Sample ID', 'Name', 'Age', 'Gender', 'Mobile', 'Address', 'Hospital',
-                'Department', 'Consultant', 'Sample Type', 'Sample Date', 'Tests', 'Total Amount', 'Payment', 'Paid',
+                'Department', 'Consultant', 'Sample Type', 'Sample Date', 'Sample Time', 'Details Filled Time', 'Tests', 'Total Amount', 'Payment', 'Paid',
                 'Report Delivered', 'Status', 'Report File'
             ];
             const rows = patients.map(p => [
                 p.patient_id, p.sample_id, p.patient_name, p.age, p.gender, p.mobile, p.address,
-                p.hospital, p.department, p.consultant, p.sample_type, p.sample_date,
+                p.hospital, p.department, p.consultant, p.sample_type, p.sample_date, p.sample_time || '',
+                p.details_filled_time ? new Date(p.details_filled_time).toLocaleString() : '',
                 (p.tests || []).join('; '), p.total_amount.toFixed(2), p.payment_method,
                 p.paid ? 'Yes' : 'No', p.report_delivered ? 'Yes' : 'No', p.status,
                 p.report_file || ''
@@ -3895,7 +4022,9 @@
             showToast('Data exported!', 'success');
         }
 
-        // ===== NAVIGATION =====
+        // ============================================================
+        // NAVIGATION
+        // ============================================================
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
@@ -3926,7 +4055,9 @@
             }
         }
 
-        // ===== TOAST =====
+        // ============================================================
+        // TOAST
+        // ============================================================
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -3940,15 +4071,16 @@
             }, 3000);
         }
 
-        // ===== INIT =====
+        // ============================================================
+        // INIT
+        // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
-            // Show auth screen
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
             
-            // Set default dates
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('sampleDate').value = today;
+            document.getElementById('sampleTime').value = new Date().toTimeString().slice(0,5);
             const d = new Date();
             d.setFullYear(d.getFullYear() - 25);
             document.getElementById('patientDOB').value = d.toISOString().split('T')[0];
@@ -3957,7 +4089,9 @@
             loadTests();
         });
 
-        // ===== EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE =====
+        // ============================================================
+        // EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
+        // ============================================================
         window.switchAuthTab = switchAuthTab;
         window.togglePassword = togglePassword;
         window.handleLogin = handleLogin;
@@ -4010,6 +4144,8 @@
         window.generateUUID = generateUUID;
         window.renderEditTestGrid = renderEditTestGrid;
         window.updateEditTestTotal = updateEditTestTotal;
+        window.getNextPatientId = getNextPatientId;
+        window.getNextSampleId = getNextSampleId;
     </script>
 </body>
 </html>
