@@ -6,7 +6,7 @@
     <title>SLIBTEC - Pathology Lab</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
     </script>
@@ -813,6 +813,10 @@
             background: rgba(69, 90, 100, 0.1);
             color: var(--secondary);
         }
+        .badge-control {
+            background: rgba(123, 31, 162, 0.12);
+            color: #7b1fa2;
+        }
 
         /* ===== ACTIONS ===== */
         .actions {
@@ -842,7 +846,7 @@
             background: var(--success);
             color: white;
         }
-        .actions .barcode-btn {
+        .actions .qr-btn {
             background: var(--accent);
             color: white;
         }
@@ -961,29 +965,251 @@
             padding-right: 2.2rem;
         }
 
-        /* ===== BARCODE ===== */
-        .barcode-container {
-            text-align: center;
-            padding: 1.5rem 1rem;
-            background: var(--bg);
+        /* ===== STICKER SHEET ===== */
+        .sticker-controls {
+            background: var(--card);
             border-radius: var(--radius);
-            margin-top: 1rem;
+            box-shadow: var(--shadow);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--border);
+        }
+        .sticker-controls .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+        .sticker-controls .control-row .form-group {
+            flex: 1 1 120px;
+            min-width: 80px;
+        }
+        .sticker-controls .control-row .form-group label {
+            font-size: 0.7rem;
+        }
+        .sticker-controls .control-row .form-group input,
+        .sticker-controls .control-row .form-group select {
+            padding: 0.4rem 0.6rem;
+            font-size: 0.85rem;
+            min-height: 36px;
+        }
+
+        .sticker-sample-selector {
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .sticker-sample-selector .search-box-sm {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .sticker-sample-selector .search-box-sm input {
+            flex: 1;
+            padding: 0.4rem 0.6rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            min-height: 36px;
+        }
+        .sticker-sample-selector .search-box-sm input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .sticker-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        .sticker-selection-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.5rem;
+            background: white;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+        .sticker-selection-item input[type="checkbox"] {
+            flex-shrink: 0;
+        }
+        .sticker-selection-item .sample-id {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.8rem;
+        }
+        .sticker-selection-item .patient-name {
+            color: var(--text-light);
+            font-size: 0.75rem;
+        }
+
+        .sticker-sheet-container {
+            background: white;
+            padding: 10mm;
+            margin: 0 auto;
+            width: 210mm;
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius);
+            display: none;
             overflow-x: auto;
         }
-        .barcode-container svg {
-            max-width: 100%;
-            height: auto;
+        .sticker-sheet-container.active {
+            display: block;
         }
-        .barcode-controls {
-            display: flex;
-            gap: 0.6rem;
+        .sticker-sheet {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3mm;
             justify-content: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
         }
-        .barcode-controls .btn {
-            flex: 1 1 auto;
-            min-width: 100px;
+        .sticker-item {
+            width: 100%;
+            aspect-ratio: 2 / 1;
+            border: 0.3mm solid #1a237e;
+            border-radius: 0.5mm;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 1mm;
+            min-height: 20mm;
+        }
+        .sticker-item .sticker-qr {
+            flex: 0 0 40%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 1mm;
+        }
+        .sticker-item .sticker-qr canvas,
+        .sticker-item .sticker-qr img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+        .sticker-item .sticker-text {
+            flex: 1;
+            padding-left: 1mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 0.5mm;
+            min-width: 0;
+            height: 100%;
+        }
+        .sticker-item .sticker-text .brand {
+            font-size: 3.2mm;
+            font-weight: 900;
+            color: #1a237e;
+            letter-spacing: 0.3mm;
+            line-height: 1.1;
+        }
+        .sticker-item .sticker-text .sub {
+            font-size: 1.8mm;
+            color: #455a64;
+            font-weight: 600;
+            letter-spacing: 0.2mm;
+        }
+        .sticker-item .sticker-text .id-label {
+            font-size: 1.6mm;
+            color: #1a237e;
+            background: #f0f2f5;
+            padding: 0.2mm 0.8mm;
+            border-radius: 0.5mm;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.2mm;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ===== PRINT STYLES - ONLY STICKER SHEET ===== */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .sticker-controls {
+                display: none !important;
+            }
+            body * {
+                visibility: hidden;
+            }
+            .sticker-sheet-container,
+            .sticker-sheet-container * {
+                visibility: visible;
+            }
+            .sticker-sheet-container {
+                display: block !important;
+                box-shadow: none;
+                border-radius: 0;
+                padding: 2mm;
+                margin: 0;
+                width: 100%;
+                max-width: 210mm;
+                background: white;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 9999;
+                overflow: hidden;
+            }
+            .sticker-sheet {
+                gap: 2mm;
+                width: 100%;
+                height: 100%;
+                align-content: start;
+                justify-content: center;
+            }
+            .sticker-item {
+                border: 0.3mm solid #1a237e;
+                background: white;
+                break-inside: avoid;
+                page-break-inside: avoid;
+                min-height: 15mm;
+                max-height: 30mm;
+            }
+            .sticker-item .sticker-text .brand {
+                font-size: 2.8mm;
+            }
+            .sticker-item .sticker-text .sub {
+                font-size: 1.6mm;
+            }
+            .sticker-item .sticker-text .id-label {
+                font-size: 1.4mm;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            .sticker-item {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
         }
 
         /* ===== MODAL ===== */
@@ -1359,40 +1585,9 @@
             font-size: 0.8rem;
         }
 
-        /* ===== PRINT ===== */
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            .report-preview {
-                box-shadow: none;
-                border: none;
-                padding: 0.5in;
-            }
-            .modal-overlay.active {
-                position: static;
-                background: none;
-                backdrop-filter: none;
-                padding: 0;
-            }
-            .modal {
-                max-height: none;
-                box-shadow: none;
-                border: 1px solid #ddd;
-            }
-            .modal-header,
-            .modal-footer {
-                display: none !important;
-            }
-            .modal-body {
-                padding: 0;
-            }
-        }
-
         /* ============================================================
-           RESPONSIVE BREAKPOINTS
+           RESPONSIVE
            ============================================================ */
-
         @media (min-width: 768px) {
             .auth-container {
                 padding: 3rem;
@@ -1456,10 +1651,6 @@
             .payment-options {
                 grid-template-columns: 1fr 1fr;
             }
-            .barcode-controls .btn {
-                flex: 0 1 auto;
-                min-width: 120px;
-            }
             .btn-group .btn {
                 flex: 0 1 auto;
                 min-width: 140px;
@@ -1485,6 +1676,12 @@
             }
             .edit-modal .modal {
                 max-width: 800px;
+            }
+            .sticker-selection-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            .sticker-controls .control-row .form-group {
+                flex: 1 1 150px;
             }
         }
 
@@ -1660,15 +1857,6 @@
                 min-width: auto;
                 justify-content: center;
             }
-            .barcode-controls .btn {
-                flex: 1 1 auto;
-                min-width: 80px;
-                font-size: 0.8rem;
-                padding: 0.5rem 0.8rem;
-            }
-            .barcode-controls {
-                gap: 0.4rem;
-            }
             .auth-tabs .auth-tab {
                 font-size: 0.7rem;
                 padding: 0.5rem 0.3rem;
@@ -1750,6 +1938,30 @@
             .report-list-item {
                 flex-direction: column;
                 align-items: stretch;
+            }
+            .sticker-sheet-container {
+                width: 100%;
+                padding: 3mm;
+                overflow-x: auto;
+            }
+            .sticker-sheet {
+                gap: 2mm;
+            }
+            .sticker-item {
+                min-height: 16mm;
+            }
+            .sticker-item .sticker-text .brand {
+                font-size: 2.5mm;
+            }
+            .sticker-item .sticker-text .sub {
+                font-size: 1.4mm;
+            }
+            .sticker-item .sticker-text .id-label {
+                font-size: 1.2mm;
+            }
+            .sticker-controls .control-row .form-group {
+                flex: 1 1 80px;
+                min-width: 60px;
             }
         }
 
@@ -1954,12 +2166,13 @@
 
                 <ul class="nav-links" id="navLinks">
                     <li><button class="active" onclick="showSection('dashboard')" id="navDashboard">📊 Dashboard</button></li>
-                    <li><button onclick="showSection('registration')" id="navRegistration">📝 New Patient</button></li>
+                    <li><button onclick="showSection('registration')" id="navRegistration">📝 New Entry</button></li>
                     <li><button onclick="showSection('patients')" id="navPatients">👥 Patients</button></li>
-                    <li><button onclick="showSection('samples')" id="navSamples">🧪 Samples</button></li>
+                    <li><button onclick="showSection('controls')" id="navControls">🧪 Controls</button></li>
+                    <li><button onclick="showSection('samples')" id="navSamples">🧬 Samples</button></li>
                     <li><button onclick="showSection('reports')" id="navReports">📄 Reports</button></li>
                     <li><button onclick="showSection('tests')" id="navTests">⚙️ Tests</button></li>
-                    <li><button onclick="showSection('barcodes')" id="navBarcodes">🏷️ Barcodes</button></li>
+                    <li><button onclick="showSection('qrStickers')" id="navQrStickers">📱 QR & Stickers</button></li>
                     <li><button onclick="showSection('profile')" id="navProfile" style="display:none;">👤 My Profile</button></li>
                 </ul>
 
@@ -1977,11 +2190,11 @@
             <section id="dashboard" class="section active">
                 <div class="stats-grid">
                     <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-info"><h3 id="totalPatients">0</h3><p>Total Patients</p></div></div>
-                    <div class="stat-card" style="border-left-color:var(--success);"><div class="stat-icon" style="background:rgba(46,125,50,0.08);">🧪</div><div class="stat-info"><h3 id="totalSamples">0</h3><p>Total Samples</p></div></div>
+                    <div class="stat-card" style="border-left-color:#7b1fa2;"><div class="stat-icon" style="background:rgba(123,31,162,0.08);">🧪</div><div class="stat-info"><h3 id="totalControls">0</h3><p>Total Controls</p></div></div>
+                    <div class="stat-card" style="border-left-color:var(--success);"><div class="stat-icon" style="background:rgba(46,125,50,0.08);">🧬</div><div class="stat-info"><h3 id="totalSamples">0</h3><p>Total Samples</p></div></div>
                     <div class="stat-card" style="border-left-color:var(--warning);"><div class="stat-icon" style="background:rgba(245,127,23,0.08);">📄</div><div class="stat-info"><h3 id="pendingReports">0</h3><p>Pending Reports</p></div></div>
                     <div class="stat-card" style="border-left-color:var(--accent);"><div class="stat-icon" style="background:rgba(255,111,0,0.08);">💰</div><div class="stat-info"><h3 id="todayRevenue">Rs. 0.00</h3><p>Today's Revenue</p></div></div>
                     <div class="stat-card" style="border-left-color:var(--danger);"><div class="stat-icon" style="background:rgba(198,40,40,0.08);">💳</div><div class="stat-info"><h3 id="pendingPayments">0</h3><p>Pending Payments</p></div></div>
-                    <div class="stat-card" style="border-left-color:var(--secondary);"><div class="stat-icon" style="background:rgba(69,90,100,0.08);">📬</div><div class="stat-info"><h3 id="pendingDelivery">0</h3><p>Pending Delivery</p></div></div>
                 </div>
 
                 <div class="card">
@@ -1989,16 +2202,37 @@
                         <div class="card-title"><div class="icon">📋</div>Recent Registrations</div>
                         <button class="btn btn-primary" onclick="showSection('registration')">+ New</button>
                     </div>
-                    <div id="recentPatientsList"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No patients yet</h3><p>Start by registering your first patient</p></div></div>
+                    <div id="recentPatientsList"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No entries yet</h3><p>Start by registering your first patient or control</p></div></div>
                 </div>
             </section>
 
             <!-- Registration -->
             <section id="registration" class="section">
                 <form id="patientForm" onsubmit="handleSubmit(event)">
+                    <!-- Entry Type Selection -->
                     <div class="card" style="border:2px solid var(--primary);">
                         <div class="card-header">
-                            <div class="card-title"><div class="icon">🔍</div>Search Existing Patient</div>
+                            <div class="card-title"><div class="icon">📌</div>Entry Type</div>
+                            <span class="badge badge-primary">Select one</span>
+                        </div>
+                        <div class="form-group">
+                            <div class="radio-group" style="gap:1.5rem;padding:0.5rem 0;">
+                                <label class="radio-label" style="font-size:1rem;font-weight:600;">
+                                    <input type="radio" name="entryType" value="patient" checked onchange="toggleEntryType()" />
+                                    <span style="color:var(--primary);">👤 Patient</span>
+                                </label>
+                                <label class="radio-label" style="font-size:1rem;font-weight:600;">
+                                    <input type="radio" name="entryType" value="control" onchange="toggleEntryType()" />
+                                    <span style="color:#7b1fa2;">🧪 Control</span>
+                                </label>
+                            </div>
+                            <span class="hint" id="entryTypeHint">Patient entries use PAT IDs. Control entries use CON IDs.</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border:2px solid var(--primary);">
+                        <div class="card-header">
+                            <div class="card-title"><div class="icon">🔍</div>Search Existing</div>
                             <span class="badge badge-info">Enter mobile or name</span>
                         </div>
                         <div class="form-grid">
@@ -2008,11 +2242,11 @@
                                 <div class="patient-search-results" id="patientSearchResults"></div>
                             </div>
                             <div class="form-group" style="display:flex;align-items:flex-end;gap:0.5rem;">
-                                <button type="button" class="btn btn-success" onclick="clearPatientSearch()" style="width:100%;">🔄 New Patient</button>
+                                <button type="button" class="btn btn-success" onclick="clearPatientSearch()" style="width:100%;">🔄 New Entry</button>
                             </div>
                         </div>
                         <div id="selectedPatientInfo" style="display:none;margin-top:0.5rem;padding:0.8rem;background:var(--bg);border-radius:var(--radius-sm);border:2px solid var(--success);">
-                            <strong>✅ Selected Patient:</strong> <span id="selectedPatientName"></span> 
+                            <strong>✅ Selected:</strong> <span id="selectedPatientName"></span>
                             (<span id="selectedPatientId"></span>) - Mobile: <span id="selectedPatientMobile"></span>
                             <button type="button" class="btn btn-secondary" onclick="clearPatientSearch()" style="margin-left:0.5rem;padding:0.2rem 0.8rem;">Change</button>
                         </div>
@@ -2020,11 +2254,11 @@
 
                     <div class="card">
                         <div class="card-header">
-                            <div class="card-title"><div class="icon">👤</div>Patient Information</div>
+                            <div class="card-title"><div class="icon">👤</div>Information</div>
                             <span class="badge badge-primary" id="patientIdDisplay">ID: Auto</span>
                         </div>
                         <div class="form-grid">
-                            <div class="form-group"><label>Patient Name *</label><input type="text" id="patientName" required placeholder="Enter full name" /></div>
+                            <div class="form-group"><label>Full Name *</label><input type="text" id="patientName" required placeholder="Enter full name" /></div>
                             <div class="form-group"><label>Age *</label><input type="number" id="patientAge" required min="0" max="120" placeholder="Enter age" onchange="handleAgeChange()" /></div>
                             <div class="form-group">
                                 <label>Gender *</label>
@@ -2066,7 +2300,6 @@
                                     <option value="">Select type</option>
                                     <option value="Blood">Blood</option><option value="Tissue">Tissue</option>
                                     <option value="Saliva">Saliva</option><option value="Urine">Urine</option>
-                                   
                                 </select>
                             </div>
                         </div>
@@ -2105,7 +2338,7 @@
                     <div class="card-header"><div class="card-title"><div class="icon">👥</div>All Patients</div></div>
                     <div class="toolbar">
                         <div class="search-box"><input type="text" id="searchInput" placeholder="Search by name, ID, or mobile..." onkeyup="searchPatients()" /></div>
-                        <button class="btn btn-secondary" onclick="exportData()">📥 Export</button>
+                        <button class="btn btn-secondary" onclick="exportData('patient')">📥 Export</button>
                     </div>
                     <div class="table-container">
                         <table id="patientsTable">
@@ -2116,15 +2349,35 @@
                 </div>
             </section>
 
+            <!-- Controls -->
+            <section id="controls" class="section">
+                <div class="card" style="border-left:4px solid #7b1fa2;">
+                    <div class="card-header">
+                        <div class="card-title"><div class="icon" style="background:#7b1fa2;">🧪</div>All Controls</div>
+                        <span class="badge badge-control">Control Entries</span>
+                    </div>
+                    <div class="toolbar">
+                        <div class="search-box"><input type="text" id="controlsSearchInput" placeholder="Search by name, ID, or mobile..." onkeyup="searchControls()" /></div>
+                        <button class="btn btn-secondary" onclick="exportData('control')">📥 Export</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="controlsTable">
+                            <thead><tr><th>Control ID</th><th>Name</th><th>Age/Gender</th><th>Mobile</th><th>Sample</th><th>Date/Time</th><th>Amount</th><th>Payment</th><th>Paid</th><th>Report</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="controlsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- Samples -->
             <section id="samples" class="section">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title"><div class="icon">🧪</div>Sample Management</div>
+                        <div class="card-title"><div class="icon">🧬</div>Sample Management</div>
                         <button class="btn btn-primary" onclick="showSection('registration')">+ New</button>
                     </div>
                     <div class="toolbar">
-                        <div class="search-box"><input type="text" id="sampleSearchInput" placeholder="Search by Patient ID, Name, or Sample ID..." onkeyup="searchSamples()" /></div>
+                        <div class="search-box"><input type="text" id="sampleSearchInput" placeholder="Search by ID, Name, or Sample ID..." onkeyup="searchSamples()" /></div>
                         <div class="filter-group">
                             <select id="paymentFilter" onchange="filterSamples()"><option value="all">All Payments</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select>
                             <select id="deliveryFilter" onchange="filterSamples()"><option value="all">All Delivery</option><option value="delivered">Delivered</option><option value="pending">Pending</option></select>
@@ -2133,7 +2386,7 @@
                     </div>
                     <div class="table-container">
                         <table id="samplesTable">
-                            <thead><tr><th>Sample ID</th><th>Patient ID</th><th>Patient Name</th><th>Type</th><th>Date/Time</th><th>Amount</th><th>Payment</th><th>Paid</th><th>Report</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>Sample ID</th><th>Entry ID</th><th>Name</th><th>Type</th><th>Date/Time</th><th>Amount</th><th>Payment</th><th>Paid</th><th>Report</th><th>Status</th><th>Type</th><th>Actions</th></tr></thead>
                             <tbody id="samplesTableBody"></tbody>
                         </table>
                     </div>
@@ -2148,10 +2401,10 @@
                         <span class="badge badge-primary">Upload PDF Reports</span>
                     </div>
                     <p style="color:var(--text-light);margin-bottom:1rem;">Upload completed lab reports (PDF). Status will be updated to "Completed" and report will be marked as delivered.</p>
-                    
+
                     <div class="form-grid" style="margin-bottom:1.5rem;">
                         <div class="form-group">
-                            <label>Select Sample / Patient</label>
+                            <label>Select Sample / Entry</label>
                             <select id="reportPatientSelect" onchange="checkReportExists()">
                                 <option value="">-- Select a sample --</option>
                             </select>
@@ -2197,35 +2450,68 @@
                 </div>
             </section>
 
+            <!-- QR & Stickers -->
+            <section id="qrStickers" class="section">
+                <div class="sticker-controls no-print">
+                    <div class="card-header">
+                        <div class="card-title"><div class="icon">📇</div>Sticker Sheet Generator</div>
+                        <span class="badge badge-accent">Customizable labels</span>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="form-group">
+                            <label>Rows</label>
+                            <input type="number" id="stickerRows" value="5" min="1" max="15" />
+                        </div>
+                        <div class="form-group">
+                            <label>Sticker Width (mm)</label>
+                            <input type="number" id="stickerWidth" value="40" min="20" max="80" step="1" />
+                        </div>
+                        <div class="form-group">
+                            <label>Sticker Height (mm)</label>
+                            <input type="number" id="stickerHeight" value="20" min="10" max="40" step="1" />
+                        </div>
+                        <div class="form-group">
+                            <label>Column Gap (mm)</label>
+                            <input type="number" id="stickerColGap" value="5" min="1" max="15" step="0.5" />
+                        </div>
+                        <div class="form-group">
+                            <label>Row Gap (mm)</label>
+                            <input type="number" id="stickerRowGap" value="5" min="1" max="15" step="0.5" />
+                        </div>
+                        <div class="form-group" style="flex:0 0 auto;">
+                            <button class="btn btn-secondary" onclick="applyStickerSettings()" style="width:100%;">Apply</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+                        <button class="btn btn-secondary" onclick="selectAllStickers()">✅ Select All</button>
+                        <button class="btn btn-secondary" onclick="deselectAllStickers()">⬜ Deselect All</button>
+                        <button class="btn btn-success" onclick="generateStickerSheet()">🖨️ Generate Sheet</button>
+                        <button class="btn btn-primary" onclick="printStickerSheet()" id="printStickerBtn" style="display:none;">🖨️ Print Sheet</button>
+                    </div>
+
+                    <div class="sticker-sample-selector">
+                        <div class="search-box-sm">
+                            <input type="text" id="stickerSearchInput" placeholder="🔍 Search by Sample ID or Name..." oninput="filterStickerSamples()" />
+                        </div>
+                        <div id="stickerSelectionArea">
+                            <div class="empty-state" id="noSamplesMsg">No samples available. Please register first.</div>
+                            <div class="sticker-selection-grid" id="stickerSelectionGrid" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sticker-sheet-container" id="stickerSheetContainer">
+                    <div class="sticker-sheet" id="stickerSheet"></div>
+                </div>
+            </section>
+
             <!-- Profile -->
             <section id="profile" class="section">
                 <div class="card">
                     <div class="card-header"><div class="card-title"><div class="icon">👤</div>My Profile & History</div><button class="btn btn-primary" onclick="showSection('registration')">+ New Test</button></div>
                     <div id="profileContent"><div class="empty-state"><div class="empty-state-icon">📭</div><h3>No test history</h3><p>You haven't taken any tests yet.</p></div></div>
-                </div>
-            </section>
-
-            <!-- Barcodes -->
-            <section id="barcodes" class="section">
-                <div class="card">
-                    <div class="card-header"><div class="card-title"><div class="icon">🏷️</div>Barcode Generator</div></div>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Enter Sample ID or Patient ID</label><input type="text" id="barcodeInput" placeholder="Enter ID to generate barcode" /></div>
-                        <div class="form-group"><label>Barcode Type</label>
-                            <select id="barcodeType">
-                                <option value="CODE128">CODE128</option><option value="CODE39">CODE39</option>
-                                <option value="EAN13">EAN-13</option><option value="UPC">UPC</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label>Width</label><input type="number" id="barcodeWidth" value="2" min="1" max="4" /></div>
-                        <div class="form-group"><label>Height</label><input type="number" id="barcodeHeight" value="100" min="50" max="200" /></div>
-                    </div>
-                    <div class="barcode-controls">
-                        <button class="btn btn-primary" onclick="generateCustomBarcode()">Generate</button>
-                        <button class="btn btn-secondary" onclick="printBarcode()">Print</button>
-                        <button class="btn btn-success" onclick="downloadBarcode()">Download PNG</button>
-                    </div>
-                    <div class="barcode-container"><svg id="barcode"></svg></div>
                 </div>
             </section>
         </div>
@@ -2235,14 +2521,14 @@
     <div class="modal-overlay edit-modal" id="editPatientModal">
         <div class="modal">
             <div class="modal-header">
-                <h2>✏️ Edit Patient</h2>
+                <h2>✏️ Edit Entry</h2>
                 <button class="close-btn" onclick="closeEditModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="editPatientForm" onsubmit="savePatientEdit(event)">
                     <input type="hidden" id="editPatientId" />
                     <div class="form-grid">
-                        <div class="form-group"><label>Patient Name *</label><input type="text" id="editPatientName" required /></div>
+                        <div class="form-group"><label>Name *</label><input type="text" id="editPatientName" required /></div>
                         <div class="form-group"><label>Age *</label><input type="number" id="editPatientAge" required min="0" max="120" /></div>
                         <div class="form-group">
                             <label>Gender *</label>
@@ -2263,11 +2549,16 @@
                             <select id="editSampleType">
                                 <option value="Blood">Blood</option><option value="Tissue">Tissue</option>
                                 <option value="Saliva">Saliva</option><option value="Urine">Urine</option>
-                              
                             </select>
                         </div>
                         <div class="form-group"><label>Sample Date</label><input type="date" id="editSampleDate" /></div>
                         <div class="form-group"><label>Sample Time</label><input type="time" id="editSampleTime" /></div>
+                        <div class="form-group"><label>Entry Type</label>
+                            <select id="editEntryType">
+                                <option value="patient">Patient</option>
+                                <option value="control">Control</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="card" style="margin-top:1rem;">
@@ -2317,12 +2608,12 @@
     <!-- ===== PATIENT VIEW MODAL ===== -->
     <div class="modal-overlay" id="patientModal">
         <div class="modal">
-            <div class="modal-header"><h2>Patient Report</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
+            <div class="modal-header"><h2>Entry Report</h2><button class="close-btn" onclick="closeModal()">&times;</button></div>
             <div class="modal-body" id="modalBody"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal()">Close</button>
                 <button class="btn btn-success" onclick="generatePDF()">Download PDF</button>
-                <button class="btn btn-primary" onclick="showBarcodeModal()">View Barcode</button>
+                <button class="btn btn-accent" onclick="showQRModal()">📱 View QR</button>
             </div>
         </div>
     </div>
@@ -2336,12 +2627,12 @@
         // ============================================================
         const SUPABASE_URL = 'https://xazoagpcgxnszacurcsp.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_8I3ZkjLBYvPWX_WrlKtNIg_dv9wJaVK';
-        
+
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
         // ============================================================
-        // AUTO-INCREMENT COUNTERS (stored in localStorage for persistence)
+        // AUTO-INCREMENT COUNTERS
         // ============================================================
         function getNextPatientId() {
             let counter = parseInt(localStorage.getItem('slibtec_patient_counter') || '0');
@@ -2357,6 +2648,20 @@
             return 'SLIBTECSAM' + String(counter).padStart(5, '0');
         }
 
+        function getNextControlId() {
+            let counter = parseInt(localStorage.getItem('slibtec_control_counter') || '0');
+            counter++;
+            localStorage.setItem('slibtec_control_counter', String(counter));
+            return 'SLIBTECCON' + String(counter).padStart(5, '0');
+        }
+
+        function getNextControlSampleId() {
+            let counter = parseInt(localStorage.getItem('slibtec_control_sample_counter') || '0');
+            counter++;
+            localStorage.setItem('slibtec_control_sample_counter', String(counter));
+            return 'SLIBTECCONSAM' + String(counter).padStart(5, '0');
+        }
+
         // ============================================================
         // GLOBALS
         // ============================================================
@@ -2365,12 +2670,21 @@
 
         let currentUser = null;
         let currentUserData = null;
-        let patients = [];
+        let patients = [];         // array of patient objects from patients table
+        let controls = [];         // array of control objects from controls table
+        let allEntries = [];       // combined for search/stickers
         let currentPatient = null;
         let isGuest = false;
         let availableTests = [];
         let selectedExistingPatient = null;
         let uploadedReports = [];
+        let stickerSettings = {
+            rows: 5,
+            width: 40,
+            height: 20,
+            colGap: 5,
+            rowGap: 5
+        };
 
         const DEFAULT_TESTS = [
             { id: 'test_1', name: 'Complete Blood Count', price: 1500, active: true },
@@ -2383,18 +2697,41 @@
             { id: 'test_8', name: 'X-Ray', price: 2000, active: true }
         ];
 
-        // Helper: Format price with 2 decimal places
         function formatPrice(amount) {
             return 'Rs. ' + parseFloat(amount || 0).toFixed(2);
         }
 
-        // Generate a valid UUID v4
         function generateUUID() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random() * 16 | 0,
                     v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
+        }
+
+        function getEntryType() {
+            const el = document.querySelector('input[name="entryType"]:checked');
+            return el ? el.value : 'patient';
+        }
+
+        function toggleEntryType() {
+            const type = getEntryType();
+            const hint = document.getElementById('entryTypeHint');
+            const idDisplay = document.getElementById('patientIdDisplay');
+            const sampleDisplay = document.getElementById('sampleIdDisplay');
+            if (type === 'control') {
+                hint.textContent = 'Control entries will use CON IDs and CONSAM sample IDs.';
+                idDisplay.textContent = 'ID: SLIBTECCONXXXXX';
+                sampleDisplay.textContent = 'Sample ID: SLIBTECCONSAMXXXXX';
+                idDisplay.style.color = '#7b1fa2';
+                sampleDisplay.style.color = '#7b1fa2';
+            } else {
+                hint.textContent = 'Patient entries use PAT IDs. Control entries use CON IDs.';
+                idDisplay.textContent = 'ID: Auto';
+                sampleDisplay.textContent = 'Sample ID: Auto';
+                idDisplay.style.color = '';
+                sampleDisplay.style.color = '';
+            }
         }
 
         // ============================================================
@@ -2455,11 +2792,11 @@
             successEl.classList.remove('show');
 
             if (emailOrUser === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                currentUserData = { 
+                currentUserData = {
                     uid: '00000000-0000-0000-0000-000000000001',
-                    name: 'SLIBTEC Admin', 
-                    email: 'admin@slibtec.com', 
-                    role: 'admin' 
+                    name: 'SLIBTEC Admin',
+                    email: 'admin@slibtec.com',
+                    role: 'admin'
                 };
                 currentUser = { uid: currentUserData.uid };
                 isGuest = false;
@@ -2539,9 +2876,9 @@
                 isGuest = false;
                 successEl.textContent = '✅ Account created! Redirecting...';
                 successEl.classList.add('show');
-                setTimeout(() => { 
+                setTimeout(() => {
                     finalizeLogin();
-                    showToast('Account created!', 'success'); 
+                    showToast('Account created!', 'success');
                 }, 800);
             } catch (error) {
                 console.error('Registration error:', error);
@@ -2554,10 +2891,10 @@
             isGuest = true;
             const guestUid = generateUUID();
             currentUser = { uid: guestUid };
-            currentUserData = { 
+            currentUserData = {
                 uid: guestUid,
-                name: 'Guest', 
-                role: 'guest' 
+                name: 'Guest',
+                role: 'guest'
             };
             finalizeLogin();
             showToast('Continuing as guest', 'info');
@@ -2570,7 +2907,7 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             updateNavigation();
-            loadPatients();
+            loadPatientsAndControls();
             loadTests();
         }
 
@@ -2580,17 +2917,18 @@
             const isPatient = role === 'patient';
             document.getElementById('navDashboard').style.display = isAdmin ? '' : 'none';
             document.getElementById('navPatients').style.display = isAdmin ? '' : 'none';
+            document.getElementById('navControls').style.display = isAdmin ? '' : 'none';
             document.getElementById('navSamples').style.display = isAdmin ? '' : 'none';
             document.getElementById('navReports').style.display = isAdmin ? '' : 'none';
             document.getElementById('navTests').style.display = isAdmin ? '' : 'none';
-            document.getElementById('navBarcodes').style.display = isAdmin ? '' : 'none';
+            document.getElementById('navQrStickers').style.display = isAdmin ? '' : 'none';
             document.getElementById('navRegistration').style.display = '';
             document.getElementById('navProfile').style.display = isPatient ? '' : 'none';
             if (!isAdmin && !document.querySelector('.section.active')) {
                 showSection('registration');
             } else if (!isAdmin && document.querySelector('.section.active')) {
                 const active = document.querySelector('.section.active');
-                if (active && ['dashboard', 'patients', 'samples', 'reports', 'barcodes', 'tests'].includes(active.id)) {
+                if (active && ['dashboard', 'patients', 'controls', 'samples', 'reports'].includes(active.id)) {
                     showSection('registration');
                 }
             }
@@ -2600,6 +2938,8 @@
             currentUser = null;
             currentUserData = null;
             patients = [];
+            controls = [];
+            allEntries = [];
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
             document.getElementById('loginEmail').value = 'admin@slibtec.com';
@@ -2610,47 +2950,51 @@
         }
 
         // ============================================================
-        // PATIENT SEARCH
+        // PATIENT SEARCH (across both tables)
         // ============================================================
         function searchExistingPatient() {
             const query = document.getElementById('patientSearch').value.trim().toLowerCase();
             const resultsContainer = document.getElementById('patientSearchResults');
-            
+
             if (query.length < 2) {
                 resultsContainer.classList.remove('show');
                 return;
             }
 
-            const matched = patients.filter(p => 
+            const matched = allEntries.filter(p =>
                 (p.mobile && p.mobile.includes(query)) ||
                 (p.patient_name && p.patient_name.toLowerCase().includes(query))
             ).slice(0, 10);
 
             if (matched.length === 0) {
-                resultsContainer.innerHTML = '<div class="result-item" style="color:var(--text-light);">No matching patients found</div>';
+                resultsContainer.innerHTML = '<div class="result-item" style="color:var(--text-light);">No matching entries found</div>';
                 resultsContainer.classList.add('show');
                 return;
             }
 
-            resultsContainer.innerHTML = matched.map(p => `
-                <div class="result-item" onclick="selectPatient('${p.patient_id}')">
-                    <div class="patient-name">${p.patient_name}</div>
-                    <div>
-                        <span class="patient-id">${p.patient_id}</span>
-                        <span style="color:var(--text-light);font-size:0.8rem;margin-left:0.5rem;">📱 ${p.mobile}</span>
-                        <span style="color:var(--text-light);font-size:0.8rem;margin-left:0.5rem;">${p.age} yrs</span>
+            resultsContainer.innerHTML = matched.map(p => {
+                const isControl = p.entry_type === 'control';
+                return `
+                    <div class="result-item" onclick="selectPatient('${p.patient_id}')">
+                        <div class="patient-name">${p.patient_name}</div>
+                        <div>
+                            <span class="patient-id">${p.patient_id}</span>
+                            <span style="color:var(--text-light);font-size:0.8rem;margin-left:0.5rem;">📱 ${p.mobile}</span>
+                            <span style="color:var(--text-light);font-size:0.8rem;margin-left:0.5rem;">${p.age} yrs</span>
+                            <span class="badge ${isControl?'badge-control':'badge-primary'}" style="margin-left:0.5rem;">${isControl?'Control':'Patient'}</span>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             resultsContainer.classList.add('show');
         }
 
         function selectPatient(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
+            const patient = allEntries.find(p => p.patient_id === patientId);
             if (!patient) return;
 
             selectedExistingPatient = patient;
-            
+
             document.getElementById('patientName').value = patient.patient_name || '';
             document.getElementById('patientAge').value = patient.age || '';
             document.getElementById('patientNIC').value = patient.nic || '';
@@ -2661,7 +3005,14 @@
             document.getElementById('departmentName').value = patient.department || '';
             document.getElementById('consultantName').value = patient.consultant || '';
             document.getElementById('clinicalPresentation').value = patient.clinical_presentation || '';
-            
+
+            // Set entry type radio
+            const entryType = patient.entry_type || 'patient';
+            document.querySelectorAll('input[name="entryType"]').forEach(r => {
+                r.checked = r.value === entryType;
+            });
+            toggleEntryType();
+
             document.querySelectorAll('input[name="gender"]').forEach(r => {
                 r.checked = r.value === patient.gender;
             });
@@ -2670,14 +3021,14 @@
             document.getElementById('selectedPatientId').textContent = patient.patient_id;
             document.getElementById('selectedPatientMobile').textContent = patient.mobile;
             document.getElementById('selectedPatientInfo').style.display = 'block';
-            
+
             document.getElementById('patientSearchResults').classList.remove('show');
             document.getElementById('patientSearch').value = '';
-            
+
             document.getElementById('patientIdDisplay').textContent = 'ID: ' + patient.patient_id;
             document.getElementById('patientIdDisplay').style.color = 'var(--success)';
-            
-            showToast('Patient loaded! Add new sample for ' + patient.patient_name, 'success');
+
+            showToast('Entry loaded! Add new sample for ' + patient.patient_name, 'success');
         }
 
         function clearPatientSearch() {
@@ -2687,6 +3038,11 @@
             document.getElementById('patientSearchResults').classList.remove('show');
             document.getElementById('patientIdDisplay').textContent = 'ID: Auto';
             document.getElementById('patientIdDisplay').style.color = '';
+            // Reset entry type to patient
+            document.querySelectorAll('input[name="entryType"]').forEach(r => {
+                r.checked = r.value === 'patient';
+            });
+            toggleEntryType();
         }
 
         // ============================================================
@@ -2891,86 +3247,128 @@
         }
 
         // ============================================================
-        // PATIENTS
+        // PATIENTS & CONTROLS LOAD
         // ============================================================
-        async function loadPatients() {
+        async function loadPatientsAndControls() {
             try {
-                let query = supabaseClient
+                // Load patients
+                let queryPatients = supabaseClient
                     .from('patients')
                     .select('*')
                     .order('created_at', { ascending: false });
                 if (currentUserData && currentUserData.role === 'patient') {
-                    query = query.eq('created_by', currentUser.uid);
+                    queryPatients = queryPatients.eq('created_by', currentUser.uid);
                 }
-                const { data, error } = await query;
-                if (error) throw error;
-                patients = data || [];
-                patients.forEach(p => {
+                const { data: patientData, error: patientError } = await queryPatients;
+                if (patientError) throw patientError;
+
+                // Load controls
+                let queryControls = supabaseClient
+                    .from('controls')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (currentUserData && currentUserData.role === 'patient') {
+                    queryControls = queryControls.eq('created_by', currentUser.uid);
+                }
+                const { data: controlData, error: controlError } = await queryControls;
+                if (controlError) throw controlError;
+
+                // Normalize both into a common structure with entry_type
+                patients = (patientData || []).map(p => ({ ...p, entry_type: 'patient' }));
+                controls = (controlData || []).map(c => ({ ...c, entry_type: 'control' }));
+
+                // Map controls to have same field names as patients for unified handling
+                // In controls table, the ID field is 'control_id', but we map to 'patient_id' for uniformity in the UI.
+                // We also ensure we have a 'patient_name' field.
+                controls = controls.map(c => ({
+                    ...c,
+                    patient_id: c.control_id,       // map control_id -> patient_id
+                    patient_name: c.control_name,   // map control_name -> patient_name
+                }));
+
+                // For patients, they already have patient_id and patient_name.
+                // We'll keep both arrays separate, but for unified operations we create allEntries.
+                allEntries = [...patients, ...controls];
+
+                // Ensure default fields
+                allEntries.forEach(p => {
                     if (p.paid === undefined) p.paid = false;
                     if (p.report_delivered === undefined) p.report_delivered = false;
                 });
+
                 updateDashboard();
                 renderPatientsTable();
+                renderControlsTable();
                 renderSamplesTable();
                 renderProfile();
                 populateReportSelect();
+                renderStickerSelection();
             } catch (error) {
-                console.error('Load patients error:', error);
+                console.error('Load data error:', error);
                 patients = [];
+                controls = [];
+                allEntries = [];
                 updateDashboard();
                 renderPatientsTable();
+                renderControlsTable();
                 renderSamplesTable();
                 renderProfile();
-                showToast('Error loading patients: ' + error.message, 'error');
+                renderStickerSelection();
+                showToast('Error loading data: ' + error.message, 'error');
             }
         }
 
         function renderProfile() {
             const container = document.getElementById('profileContent');
             if (!container) return;
-            const userPatients = patients.filter(p => p.created_by === currentUser?.uid);
-            if (userPatients.length === 0) {
+            const userEntries = allEntries.filter(p => p.created_by === currentUser?.uid);
+            if (userEntries.length === 0) {
                 container.innerHTML =
                     `<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No test history</h3><p>You haven't taken any tests yet.</p></div>`;
                 return;
             }
             let html =
-                `<div style="margin-bottom:1.5rem;"><p><strong>Name:</strong> ${currentUserData?.name||'N/A'}</p><p><strong>Email:</strong> ${currentUserData?.email||'N/A'}</p><p><strong>Role:</strong> ${currentUserData?.role||'N/A'}</p><p><strong>Total Tests:</strong> ${userPatients.length}</p></div><div class="table-container"><table><thead><tr><th>Patient ID</th><th>Name</th><th>Test</th><th>Date/Time</th><th>Amount</th><th>Paid</th><th>Report</th><th>Status</th></tr></thead><tbody>`;
-            userPatients.forEach(p => {
+                `<div style="margin-bottom:1.5rem;"><p><strong>Name:</strong> ${currentUserData?.name||'N/A'}</p><p><strong>Email:</strong> ${currentUserData?.email||'N/A'}</p><p><strong>Role:</strong> ${currentUserData?.role||'N/A'}</p><p><strong>Total Tests:</strong> ${userEntries.length}</p></div><div class="table-container"><table><thead><tr><th>Entry ID</th><th>Name</th><th>Test</th><th>Date/Time</th><th>Amount</th><th>Paid</th><th>Report</th><th>Status</th><th>Type</th></tr></thead><tbody>`;
+            userEntries.forEach(p => {
                 const tests = p.tests || [];
                 const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : 'N/A';
+                const typeLabel = p.entry_type === 'control' ? '🧪 Control' : '👤 Patient';
                 html +=
-                    `<tr><td>${p.patient_id||'N/A'}</td><td>${p.patient_name||'N/A'}</td><td>${tests.join(', ')||'N/A'}</td><td>${dateTime}</td><td>${formatPrice(p.total_amount)}</td><td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td><td><span class="badge ${p.report_delivered?'badge-success':'badge-warning'}">${p.report_delivered?'📬 Delivered':'⏳ Pending'}</span></td><td><span class="badge ${p.status==='Completed'?'badge-success':'badge-warning'}">${p.status||'Pending'}</span></td></tr>`;
+                    `<tr><td>${p.patient_id||'N/A'}</td><td>${p.patient_name||'N/A'}</td><td>${tests.join(', ')||'N/A'}</td><td>${dateTime}</td><td>${formatPrice(p.total_amount)}</td><td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td><td><span class="badge ${p.report_delivered?'badge-success':'badge-warning'}">${p.report_delivered?'📬 Delivered':'⏳ Pending'}</span></td><td><span class="badge ${p.status==='Completed'?'badge-success':'badge-warning'}">${p.status||'Pending'}</span></td><td><span class="badge ${p.entry_type==='control'?'badge-control':'badge-primary'}">${typeLabel}</span></td></tr>`;
             });
             html += `</tbody></table></div>`;
             container.innerHTML = html;
         }
 
         function updateDashboard() {
-            const total = patients.length;
-            const pending = patients.filter(p => p.status !== 'Completed' && p.status !== 'Collected').length;
+            const totalPatients = patients.length;
+            const totalControls = controls.length;
+            const pending = allEntries.filter(p => p.status !== 'Completed' && p.status !== 'Collected').length;
             const today = new Date().toISOString().split('T')[0];
-            const todayPatients = patients.filter(p => p.created_at && p.created_at.split('T')[0] === today);
-            const revenue = todayPatients.reduce((sum, p) => sum + (p.total_amount || 0), 0);
-            const pendingPayments = patients.filter(p => !p.paid).length;
-            const pendingDelivery = patients.filter(p => !p.report_delivered && p.status === 'Completed').length;
+            const todayEntries = allEntries.filter(p => p.created_at && p.created_at.split('T')[0] === today);
+            const revenue = todayEntries.reduce((sum, p) => sum + (p.total_amount || 0), 0);
+            const pendingPayments = allEntries.filter(p => !p.paid).length;
 
-            document.getElementById('totalPatients').textContent = total;
-            document.getElementById('totalSamples').textContent = patients.filter(p => p.sample_type).length;
+            document.getElementById('totalPatients').textContent = totalPatients;
+            document.getElementById('totalControls').textContent = totalControls;
+            document.getElementById('totalSamples').textContent = allEntries.filter(p => p.sample_type).length;
             document.getElementById('pendingReports').textContent = pending;
             document.getElementById('todayRevenue').textContent = formatPrice(revenue);
             document.getElementById('pendingPayments').textContent = pendingPayments;
-            document.getElementById('pendingDelivery').textContent = pendingDelivery;
 
             const recentContainer = document.getElementById('recentPatientsList');
-            const recent = patients.slice(0, 5);
+            const recent = allEntries.slice(0, 5);
             if (recent.length === 0) {
                 recentContainer.innerHTML =
-                    `<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No patients yet</h3><p>Start by registering your first patient</p></div>`;
+                    `<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No entries yet</h3><p>Start by registering your first patient or control</p></div>`;
             } else {
-                recentContainer.innerHTML = recent.map(p =>
-                    `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);"><span><strong>${p.patient_name}</strong> (${p.patient_id})</span><span>${p.sample_date||'N/A'} | <span class="badge ${p.status==='Completed'?'badge-success':'badge-warning'}">${p.status||'Pending'}</span></span></div>`
-                ).join('');
+                recentContainer.innerHTML = recent.map(p => {
+                    const typeLabel = p.entry_type === 'control' ? '🧪 Control' : '👤 Patient';
+                    return `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);">
+                        <span><strong>${p.patient_name}</strong> (${p.patient_id}) <span class="badge ${p.entry_type==='control'?'badge-control':'badge-primary'}">${typeLabel}</span></span>
+                        <span>${p.sample_date||'N/A'} | <span class="badge ${p.status==='Completed'?'badge-success':'badge-warning'}">${p.status||'Pending'}</span></span>
+                    </div>`;
+                }).join('');
             }
         }
 
@@ -2983,7 +3381,7 @@
             let filtered = patients;
             if (filter) {
                 const f = filter.toLowerCase();
-                filtered = patients.filter(p =>
+                filtered = filtered.filter(p =>
                     (p.patient_name && p.patient_name.toLowerCase().includes(f)) ||
                     (p.patient_id && p.patient_id.toLowerCase().includes(f)) ||
                     (p.mobile && p.mobile.includes(f))
@@ -3015,7 +3413,7 @@
                             <button class="edit-btn" onclick="openEditPatientModal('${p.patient_id}')" title="Edit">✏️</button>
                             <button class="delete-btn" onclick="deletePatient('${p.patient_id}')" title="Delete">🗑️</button>
                             <button class="pdf-btn" onclick="generatePDFForPatient('${p.patient_id}')" title="PDF">📄</button>
-                            <button class="barcode-btn" onclick="generateBarcodeForPatient('${p.sample_id}')" title="Barcode">🏷️</button>
+                            <button class="qr-btn" onclick="generateQRForPatient('${p.sample_id}')" title="QR">📱</button>
                             <button class="payment-btn" onclick="togglePayment('${p.patient_id}')" title="Toggle Payment">💳</button>
                             <button class="delivery-btn" onclick="toggleDelivery('${p.patient_id}')" title="Toggle Delivery">📬</button>
                             <button class="status-btn" onclick="updateStatus('${p.patient_id}')" title="Update Status">📌</button>
@@ -3031,12 +3429,68 @@
         }
 
         // ============================================================
-        // SAMPLES TABLE
+        // CONTROLS TABLE
+        // ============================================================
+        function renderControlsTable(filter = '') {
+            const tbody = document.getElementById('controlsTableBody');
+            if (!tbody) return;
+            let filtered = controls;
+            if (filter) {
+                const f = filter.toLowerCase();
+                filtered = filtered.filter(p =>
+                    (p.patient_name && p.patient_name.toLowerCase().includes(f)) ||
+                    (p.patient_id && p.patient_id.toLowerCase().includes(f)) ||
+                    (p.mobile && p.mobile.includes(f))
+                );
+            }
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    `<tr><td colspan="13" style="text-align:center;padding:2rem;color:var(--text-light);">No controls found</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(p => {
+                const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : 'N/A';
+                return `
+                <tr>
+                    <td><strong style="color:#7b1fa2;">${p.patient_id||'N/A'}</strong></td>
+                    <td>${p.patient_name||'N/A'}</td>
+                    <td>${p.age||'N/A'}/${p.gender||'N/A'}</td>
+                    <td>${p.mobile||'N/A'}</td>
+                    <td>${p.sample_type||'N/A'}</td>
+                    <td>${dateTime}</td>
+                    <td>${formatPrice(p.total_amount)}</td>
+                    <td>${p.payment_method||'N/A'}</td>
+                    <td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td>
+                    <td><span class="badge ${p.report_delivered?'badge-success':'badge-warning'}">${p.report_delivered?'📬 Delivered':'⏳ Pending'}</span></td>
+                    <td><span class="badge ${p.status==='Completed'?'badge-success':p.status==='Collected'?'badge-primary':'badge-warning'}">${p.status||'Pending'}</span></td>
+                    <td>
+                        <div class="actions">
+                            <button class="view-btn" onclick="viewPatient('${p.patient_id}')" title="View">📋</button>
+                            <button class="edit-btn" onclick="openEditPatientModal('${p.patient_id}')" title="Edit">✏️</button>
+                            <button class="delete-btn" onclick="deletePatient('${p.patient_id}')" title="Delete">🗑️</button>
+                            <button class="pdf-btn" onclick="generatePDFForPatient('${p.patient_id}')" title="PDF">📄</button>
+                            <button class="qr-btn" onclick="generateQRForPatient('${p.sample_id}')" title="QR">📱</button>
+                            <button class="payment-btn" onclick="togglePayment('${p.patient_id}')" title="Toggle Payment">💳</button>
+                            <button class="delivery-btn" onclick="toggleDelivery('${p.patient_id}')" title="Toggle Delivery">📬</button>
+                            <button class="status-btn" onclick="updateStatus('${p.patient_id}')" title="Update Status">📌</button>
+                            <button class="report-btn" onclick="openReportUpload('${p.sample_id}')" title="Upload Report">📄</button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function searchControls() {
+            renderControlsTable(document.getElementById('controlsSearchInput').value);
+        }
+
+        // ============================================================
+        // SAMPLES TABLE (combines both)
         // ============================================================
         function renderSamplesTable(filter = '') {
             const tbody = document.getElementById('samplesTableBody');
             if (!tbody) return;
-            let filtered = patients;
+            let filtered = allEntries;
             const paymentFilter = document.getElementById('paymentFilter')?.value || 'all';
             const deliveryFilter = document.getElementById('deliveryFilter')?.value || 'all';
             const statusFilter = document.getElementById('statusFilter')?.value || 'all';
@@ -3054,15 +3508,19 @@
             }
             if (filtered.length === 0) {
                 tbody.innerHTML =
-                    `<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--text-light);">No samples found</td></tr>`;
+                    `<tr><td colspan="13" style="text-align:center;padding:2rem;color:var(--text-light);">No samples found</td></tr>`;
                 return;
             }
             tbody.innerHTML = filtered.map(p => {
                 const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : 'N/A';
+                const typeLabel = p.entry_type === 'control' ? '🧪 Control' : '👤 Patient';
+                const idDisplay = p.entry_type === 'control' ?
+                    `<span style="color:#7b1fa2;">${p.patient_id||'N/A'}</span>` :
+                    p.patient_id || 'N/A';
                 return `
                 <tr>
                     <td><strong>${p.sample_id||'N/A'}</strong></td>
-                    <td>${p.patient_id||'N/A'}</td>
+                    <td>${idDisplay}</td>
                     <td>${p.patient_name||'N/A'}</td>
                     <td>${p.sample_type||'N/A'}</td>
                     <td>${dateTime}</td>
@@ -3071,13 +3529,14 @@
                     <td><span class="badge ${p.paid?'badge-success':'badge-danger'}">${p.paid?'✅ Paid':'❌ Unpaid'}</span></td>
                     <td><span class="badge ${p.report_delivered?'badge-success':'badge-warning'}">${p.report_delivered?'📬 Delivered':'⏳ Pending'}</span></td>
                     <td><span class="badge ${p.status==='Completed'?'badge-success':p.status==='Collected'?'badge-primary':'badge-warning'}">${p.status||'Pending'}</span></td>
+                    <td><span class="badge ${p.entry_type==='control'?'badge-control':'badge-primary'}">${typeLabel}</span></td>
                     <td>
                         <div class="actions">
                             <button class="view-btn" onclick="viewPatient('${p.patient_id}')" title="View">📋</button>
                             <button class="edit-btn" onclick="openEditPatientModal('${p.patient_id}')" title="Edit">✏️</button>
                             <button class="delete-btn" onclick="deletePatient('${p.patient_id}')" title="Delete">🗑️</button>
                             <button class="pdf-btn" onclick="generatePDFForPatient('${p.patient_id}')" title="PDF">📄</button>
-                            <button class="barcode-btn" onclick="generateBarcodeForPatient('${p.sample_id}')" title="Barcode">🏷️</button>
+                            <button class="qr-btn" onclick="generateQRForPatient('${p.sample_id}')" title="QR">📱</button>
                             <button class="payment-btn" onclick="togglePayment('${p.patient_id}')" title="Toggle Payment">💳</button>
                             <button class="delivery-btn" onclick="toggleDelivery('${p.patient_id}')" title="Toggle Delivery">📬</button>
                             <button class="report-btn" onclick="openReportUpload('${p.sample_id}')" title="Upload Report">📄</button>
@@ -3104,12 +3563,10 @@
                     .storage
                     .from('reports')
                     .list('');
-
                 if (error) {
                     console.warn('Could not load reports:', error.message);
                     return;
                 }
-
                 uploadedReports = data || [];
                 renderUploadedReportsList();
             } catch (error) {
@@ -3120,12 +3577,11 @@
         function renderUploadedReportsList() {
             const container = document.getElementById('uploadedReportsList');
             if (!container) return;
-
             if (uploadedReports.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No reports uploaded yet</h3><p>Upload a PDF report to get started</p></div>`;
+                container.innerHTML =
+                    `<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No reports uploaded yet</h3><p>Upload a PDF report to get started</p></div>`;
                 return;
             }
-
             container.innerHTML = uploadedReports.map(file => `
                 <div class="report-list-item">
                     <div>
@@ -3146,15 +3602,15 @@
         function populateReportSelect() {
             const select = document.getElementById('reportPatientSelect');
             if (!select) return;
-            
             select.innerHTML = '<option value="">-- Select a sample --</option>';
-            
-            patients.forEach(p => {
+            allEntries.forEach(p => {
                 const option = document.createElement('option');
                 option.value = p.sample_id;
                 const hasReport = uploadedReports.some(f => f.name.includes(p.sample_id));
                 const dateTime = p.sample_date ? p.sample_date + (p.sample_time ? ' ' + p.sample_time : '') : '';
-                option.textContent = `${p.sample_id} - ${p.patient_name} (${dateTime})${hasReport ? ' ✅ Has Report' : ''}`;
+                const typeLabel = p.entry_type === 'control' ? '🧪 Control' : '👤 Patient';
+                option.textContent =
+                    `${p.sample_id} - ${p.patient_name} (${dateTime}) ${typeLabel}${hasReport ? ' ✅ Has Report' : ''}`;
                 option.dataset.patientId = p.patient_id;
                 select.appendChild(option);
             });
@@ -3168,7 +3624,6 @@
         function checkReportExists() {
             const sampleId = document.getElementById('reportPatientSelect').value;
             if (!sampleId) return;
-            
             const hasReport = uploadedReports.some(f => f.name.includes(sampleId));
             if (hasReport) {
                 showToast('⚠️ A report already exists for this sample. You can re-upload to replace it.', 'warning');
@@ -3186,7 +3641,6 @@
         function handleReportDrop(event) {
             event.preventDefault();
             document.getElementById('reportUploadArea').classList.remove('dragover');
-            
             const files = event.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
@@ -3201,16 +3655,14 @@
         async function uploadReportFile(file) {
             const sampleId = document.getElementById('reportPatientSelect').value;
             if (!sampleId) {
-                showToast('Please select a sample/patient first', 'error');
+                showToast('Please select a sample/entry first', 'error');
                 return;
             }
-
-            const patient = patients.find(p => p.sample_id === sampleId);
-            if (!patient) {
-                showToast('Patient not found for this sample', 'error');
+            const entry = allEntries.find(p => p.sample_id === sampleId);
+            if (!entry) {
+                showToast('Entry not found for this sample', 'error');
                 return;
             }
-
             const timestamp = Date.now();
             const fileName = `report_${sampleId}_${timestamp}.pdf`;
             const filePath = fileName;
@@ -3223,25 +3675,43 @@
                         cacheControl: '3600',
                         upsert: true
                     });
-
                 if (error) throw error;
 
+                // Update the appropriate table
+                const tableName = entry.entry_type === 'control' ? 'controls' : 'patients';
+                const idField = entry.entry_type === 'control' ? 'control_id' : 'patient_id';
                 const { error: updateError } = await supabaseClient
-                    .from('patients')
-                    .update({ 
+                    .from(tableName)
+                    .update({
                         status: 'Completed',
                         report_delivered: true,
                         report_file: fileName
                     })
-                    .eq('sample_id', sampleId);
-
+                    .eq(idField, entry.patient_id);
                 if (updateError) throw updateError;
 
-                const idx = patients.findIndex(p => p.sample_id === sampleId);
-                if (idx !== -1) {
-                    patients[idx].status = 'Completed';
-                    patients[idx].report_delivered = true;
-                    patients[idx].report_file = fileName;
+                // Update local arrays
+                if (entry.entry_type === 'control') {
+                    const idx = controls.findIndex(c => c.control_id === entry.patient_id);
+                    if (idx !== -1) {
+                        controls[idx].status = 'Completed';
+                        controls[idx].report_delivered = true;
+                        controls[idx].report_file = fileName;
+                    }
+                } else {
+                    const idx = patients.findIndex(p => p.patient_id === entry.patient_id);
+                    if (idx !== -1) {
+                        patients[idx].status = 'Completed';
+                        patients[idx].report_delivered = true;
+                        patients[idx].report_file = fileName;
+                    }
+                }
+                // Update allEntries
+                const idxAll = allEntries.findIndex(p => p.sample_id === sampleId);
+                if (idxAll !== -1) {
+                    allEntries[idxAll].status = 'Completed';
+                    allEntries[idxAll].report_delivered = true;
+                    allEntries[idxAll].report_file = fileName;
                 }
 
                 await loadUploadedReports();
@@ -3250,18 +3720,17 @@
                 document.getElementById('reportStatus').style.display = 'block';
                 document.getElementById('reportUploadInfo').innerHTML = `
                     <strong>Sample:</strong> ${sampleId}<br>
-                    <strong>Patient:</strong> ${patient.patient_name}<br>
+                    <strong>Entry:</strong> ${entry.patient_name}<br>
                     <strong>File:</strong> ${file.name}<br>
                     <strong>Status:</strong> Report delivered and marked as Completed ✅
                 `;
 
                 renderPatientsTable();
+                renderControlsTable();
                 renderSamplesTable();
                 updateDashboard();
                 renderProfile();
-
-                showToast(`Report uploaded successfully for ${patient.patient_name}!`, 'success');
-
+                showToast(`Report uploaded successfully for ${entry.patient_name}!`, 'success');
             } catch (error) {
                 console.error('Upload error:', error);
                 showToast('Error uploading report: ' + error.message, 'error');
@@ -3270,13 +3739,11 @@
 
         function openReportUpload(sampleId) {
             showSection('reports');
-            
             const select = document.getElementById('reportPatientSelect');
             if (select) {
                 select.value = sampleId;
                 checkReportExists();
             }
-            
             document.getElementById('reportUploadArea').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -3286,9 +3753,7 @@
                     .storage
                     .from('reports')
                     .createSignedUrl(fileName, 60);
-
                 if (error) throw error;
-                
                 if (data?.signedUrl) {
                     window.open(data.signedUrl, '_blank');
                 } else {
@@ -3306,9 +3771,7 @@
                     .storage
                     .from('reports')
                     .download(fileName);
-
                 if (error) throw error;
-
                 const url = URL.createObjectURL(data);
                 const a = document.createElement('a');
                 a.href = url;
@@ -3317,7 +3780,6 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-
                 showToast('Report downloaded!', 'success');
             } catch (error) {
                 console.error('Download report error:', error);
@@ -3331,13 +3793,11 @@
         function renderEditTestGrid() {
             const grid = document.getElementById('editTestGrid');
             if (!grid) return;
-            
             const active = availableTests.filter(t => t.active !== false);
             if (active.length === 0) {
                 grid.innerHTML = '<p style="color:var(--text-light);padding:1rem;">No tests available. Admin can add tests in the Tests section.</p>';
                 return;
             }
-            
             grid.innerHTML = active.map(t => `
                 <label class="test-checkbox" data-test-id="${t.id}">
                     <input type="checkbox" name="editTests" value="${t.name}" data-price="${t.price}" data-test-id="${t.id}" onchange="updateEditTestTotal()">
@@ -3358,39 +3818,39 @@
                 }
             });
             document.getElementById('editTestTotalAmount').textContent = formatPrice(total);
-            document.getElementById('editTotalAmount').value = total.toFixed(2);
         }
 
         function openEditPatientModal(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
-            if (!patient) { showToast('Patient not found', 'error'); return; }
+            const entry = allEntries.find(p => p.patient_id === patientId);
+            if (!entry) { showToast('Entry not found', 'error'); return; }
 
             renderEditTestGrid();
 
-            document.getElementById('editPatientId').value = patient.patient_id;
-            document.getElementById('editPatientName').value = patient.patient_name || '';
-            document.getElementById('editPatientAge').value = patient.age || '';
-            document.getElementById('editPatientNIC').value = patient.nic || '';
-            document.getElementById('editPatientDOB').value = patient.dob || '';
-            document.getElementById('editPatientMobile').value = patient.mobile || '';
-            document.getElementById('editPatientAddress').value = patient.address || '';
-            document.getElementById('editHospitalName').value = patient.hospital || '';
-            document.getElementById('editDepartmentName').value = patient.department || '';
-            document.getElementById('editConsultantName').value = patient.consultant || '';
-            document.getElementById('editClinicalPresentation').value = patient.clinical_presentation || '';
-            document.getElementById('editSampleType').value = patient.sample_type || 'Blood';
-            document.getElementById('editSampleDate').value = patient.sample_date || '';
-            document.getElementById('editSampleTime').value = patient.sample_time || '';
-            document.getElementById('editPaymentMethod').value = patient.payment_method || 'cash';
-            document.getElementById('editStatus').value = patient.status || 'Pending';
-            document.getElementById('editPaid').value = patient.paid ? 'true' : 'false';
-            document.getElementById('editReportDelivered').value = patient.report_delivered ? 'true' : 'false';
+            document.getElementById('editPatientId').value = entry.patient_id;
+            document.getElementById('editPatientName').value = entry.patient_name || '';
+            document.getElementById('editPatientAge').value = entry.age || '';
+            document.getElementById('editPatientNIC').value = entry.nic || '';
+            document.getElementById('editPatientDOB').value = entry.dob || '';
+            document.getElementById('editPatientMobile').value = entry.mobile || '';
+            document.getElementById('editPatientAddress').value = entry.address || '';
+            document.getElementById('editHospitalName').value = entry.hospital || '';
+            document.getElementById('editDepartmentName').value = entry.department || '';
+            document.getElementById('editConsultantName').value = entry.consultant || '';
+            document.getElementById('editClinicalPresentation').value = entry.clinical_presentation || '';
+            document.getElementById('editSampleType').value = entry.sample_type || 'Blood';
+            document.getElementById('editSampleDate').value = entry.sample_date || '';
+            document.getElementById('editSampleTime').value = entry.sample_time || '';
+            document.getElementById('editPaymentMethod').value = entry.payment_method || 'cash';
+            document.getElementById('editStatus').value = entry.status || 'Pending';
+            document.getElementById('editPaid').value = entry.paid ? 'true' : 'false';
+            document.getElementById('editReportDelivered').value = entry.report_delivered ? 'true' : 'false';
+            document.getElementById('editEntryType').value = entry.entry_type || 'patient';
 
             document.querySelectorAll('input[name="editGender"]').forEach(r => {
-                r.checked = r.value === patient.gender;
+                r.checked = r.value === entry.gender;
             });
 
-            const patientTests = patient.tests || [];
+            const patientTests = entry.tests || [];
             setTimeout(() => {
                 document.querySelectorAll('#editTestGrid input[type="checkbox"]').forEach(cb => {
                     cb.checked = patientTests.includes(cb.value);
@@ -3413,10 +3873,11 @@
             e.preventDefault();
             const patientId = document.getElementById('editPatientId').value;
             const gender = document.querySelector('input[name="editGender"]:checked')?.value;
+            const entryType = document.getElementById('editEntryType').value;
 
             const selectedTests = Array.from(document.querySelectorAll('#editTestGrid input[type="checkbox"]:checked'))
                 .map(cb => cb.value);
-            
+
             if (selectedTests.length === 0) {
                 showToast('Please select at least one test', 'error');
                 return;
@@ -3455,36 +3916,53 @@
                 return;
             }
 
+            const tableName = entryType === 'control' ? 'controls' : 'patients';
+            const idField = entryType === 'control' ? 'control_id' : 'patient_id';
+
             try {
                 const { data, error } = await supabaseClient
-                    .from('patients')
+                    .from(tableName)
                     .update(updatedData)
-                    .eq('patient_id', patientId)
+                    .eq(idField, patientId)
                     .select()
                     .single();
-
                 if (error) throw error;
 
-                const idx = patients.findIndex(p => p.patient_id === patientId);
-                if (idx !== -1) {
-                    patients[idx] = { ...patients[idx], ...updatedData };
+                // Update local arrays
+                if (entryType === 'control') {
+                    const idx = controls.findIndex(c => c.control_id === patientId);
+                    if (idx !== -1) {
+                        controls[idx] = { ...controls[idx], ...updatedData };
+                    }
+                } else {
+                    const idx = patients.findIndex(p => p.patient_id === patientId);
+                    if (idx !== -1) {
+                        patients[idx] = { ...patients[idx], ...updatedData };
+                    }
+                }
+                // Update allEntries
+                const idxAll = allEntries.findIndex(p => p.patient_id === patientId);
+                if (idxAll !== -1) {
+                    allEntries[idxAll] = { ...allEntries[idxAll], ...updatedData };
                 }
 
                 closeEditModal();
                 renderPatientsTable();
+                renderControlsTable();
                 renderSamplesTable();
                 updateDashboard();
                 renderProfile();
                 populateReportSelect();
-                showToast('Patient updated successfully!', 'success');
+                renderStickerSelection();
+                showToast('Entry updated successfully!', 'success');
 
                 if (currentPatient && currentPatient.patient_id === patientId) {
-                    currentPatient = patients[idx];
+                    currentPatient = allEntries.find(p => p.patient_id === patientId);
                     document.getElementById('modalBody').innerHTML = generateReportHTML(currentPatient);
                 }
             } catch (error) {
-                console.error('Update patient error:', error);
-                showToast('Error updating patient: ' + error.message, 'error');
+                console.error('Update error:', error);
+                showToast('Error updating entry: ' + error.message, 'error');
             }
         }
 
@@ -3492,26 +3970,37 @@
         // DELETE PATIENT
         // ============================================================
         async function deletePatient(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
-            if (!patient) return;
-            if (!confirm(`Are you sure you want to delete patient ${patient.patient_name} (${patient.patient_id})? This cannot be undone.`))
+            const entry = allEntries.find(p => p.patient_id === patientId);
+            if (!entry) return;
+            if (!confirm(`Are you sure you want to delete ${entry.patient_name} (${entry.patient_id})? This cannot be undone.`))
                 return;
+            const tableName = entry.entry_type === 'control' ? 'controls' : 'patients';
+            const idField = entry.entry_type === 'control' ? 'control_id' : 'patient_id';
             try {
                 const { error } = await supabaseClient
-                    .from('patients')
+                    .from(tableName)
                     .delete()
-                    .eq('patient_id', patientId);
+                    .eq(idField, patientId);
                 if (error) throw error;
-                patients = patients.filter(p => p.patient_id !== patientId);
+
+                if (entry.entry_type === 'control') {
+                    controls = controls.filter(c => c.control_id !== patientId);
+                } else {
+                    patients = patients.filter(p => p.patient_id !== patientId);
+                }
+                allEntries = allEntries.filter(p => p.patient_id !== patientId);
+
                 renderPatientsTable();
+                renderControlsTable();
                 renderSamplesTable();
                 updateDashboard();
                 renderProfile();
                 populateReportSelect();
-                showToast('Patient deleted successfully', 'success');
+                renderStickerSelection();
+                showToast('Entry deleted successfully', 'success');
             } catch (error) {
-                console.error('Delete patient error:', error);
-                showToast('Error deleting patient: ' + error.message, 'error');
+                console.error('Delete error:', error);
+                showToast('Error deleting: ' + error.message, 'error');
             }
         }
 
@@ -3519,18 +4008,21 @@
         // TOGGLE PAYMENT
         // ============================================================
         async function togglePayment(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
-            if (!patient) return;
-            const newStatus = !patient.paid;
-            if (confirm(`Mark payment as ${newStatus?'Paid':'Unpaid'} for ${patient.patient_name}?`)) {
+            const entry = allEntries.find(p => p.patient_id === patientId);
+            if (!entry) return;
+            const newStatus = !entry.paid;
+            if (confirm(`Mark payment as ${newStatus?'Paid':'Unpaid'} for ${entry.patient_name}?`)) {
+                const tableName = entry.entry_type === 'control' ? 'controls' : 'patients';
+                const idField = entry.entry_type === 'control' ? 'control_id' : 'patient_id';
                 try {
                     const { error } = await supabaseClient
-                        .from('patients')
+                        .from(tableName)
                         .update({ paid: newStatus })
-                        .eq('patient_id', patientId);
+                        .eq(idField, patientId);
                     if (error) throw error;
-                    patient.paid = newStatus;
+                    entry.paid = newStatus;
                     renderPatientsTable();
+                    renderControlsTable();
                     renderSamplesTable();
                     updateDashboard();
                     showToast(`Payment marked as ${newStatus?'Paid':'Unpaid'}`, 'success');
@@ -3545,18 +4037,21 @@
         // TOGGLE DELIVERY
         // ============================================================
         async function toggleDelivery(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
-            if (!patient) return;
-            const newStatus = !patient.report_delivered;
-            if (confirm(`Mark report as ${newStatus?'Delivered':'Pending'} for ${patient.patient_name}?`)) {
+            const entry = allEntries.find(p => p.patient_id === patientId);
+            if (!entry) return;
+            const newStatus = !entry.report_delivered;
+            if (confirm(`Mark report as ${newStatus?'Delivered':'Pending'} for ${entry.patient_name}?`)) {
+                const tableName = entry.entry_type === 'control' ? 'controls' : 'patients';
+                const idField = entry.entry_type === 'control' ? 'control_id' : 'patient_id';
                 try {
                     const { error } = await supabaseClient
-                        .from('patients')
+                        .from(tableName)
                         .update({ report_delivered: newStatus })
-                        .eq('patient_id', patientId);
+                        .eq(idField, patientId);
                     if (error) throw error;
-                    patient.report_delivered = newStatus;
+                    entry.report_delivered = newStatus;
                     renderPatientsTable();
+                    renderControlsTable();
                     renderSamplesTable();
                     updateDashboard();
                     showToast(`Report marked as ${newStatus?'Delivered':'Pending'}`, 'success');
@@ -3600,18 +4095,16 @@
                     el.classList.add('selected');
                 }
             });
-            // Remove bank details for online payment - we're hiding them completely
-            document.getElementById('bankDetails')?.classList.remove('active');
         }
 
         async function handleSubmit(e) {
             e.preventDefault();
-            
-            // Generate auto-incremented IDs
-            const patientId = getNextPatientId();
-            const sampleId = getNextSampleId();
 
-            // Get current date/time for details filled timestamp
+            const entryType = getEntryType();
+            const isControl = entryType === 'control';
+
+            const patientId = isControl ? getNextControlId() : getNextPatientId();
+            const sampleId = isControl ? getNextControlSampleId() : getNextSampleId();
             const detailsFilledTime = new Date().toISOString();
 
             const patientName = document.getElementById('patientName').value.trim();
@@ -3632,7 +4125,7 @@
             const totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
             const paymentMethod = document.getElementById('paymentMethod').value;
 
-            if (!patientName) { showToast('Please enter patient name', 'error'); return; }
+            if (!patientName) { showToast('Please enter name', 'error'); return; }
             if (!age || age < 0) { showToast('Please enter valid age', 'error'); return; }
             if (!gender) { showToast('Please select gender', 'error'); return; }
             if (age >= 20 && !nic) { showToast('NIC is required for patients 20 years or older', 'error'); return; }
@@ -3651,8 +4144,7 @@
 
             const createdBy = currentUser?.uid || generateUUID();
 
-            const patientData = {
-                patient_id: patientId,
+            const baseData = {
                 sample_id: sampleId,
                 patient_name: patientName,
                 age,
@@ -3679,58 +4171,92 @@
                 details_filled_time: detailsFilledTime
             };
 
+            let tableName, insertData;
+            if (isControl) {
+                tableName = 'controls';
+                insertData = {
+                    ...baseData,
+                    control_id: patientId,
+                    control_name: patientName
+                };
+                // Remove patient-specific fields if any (we keep same structure but map)
+                // We'll keep control_id and control_name, but we also keep patient_name for UI consistency.
+                // However, the DB has control_name, not patient_name. We'll set both.
+                insertData.control_name = patientName;
+                insertData.patient_name = undefined; // not used in controls table
+                // But we need to keep patient_name for UI? We'll store it in control_name and when reading we map back.
+                // We'll keep the insert as is, but in the load we map control_name -> patient_name.
+                // So we insert control_name and we don't insert patient_name.
+                delete insertData.patient_name;
+            } else {
+                tableName = 'patients';
+                insertData = {
+                    ...baseData,
+                    patient_id: patientId
+                };
+                // patient_name is already there
+            }
+
             try {
                 const { data, error } = await supabaseClient
-                    .from('patients')
-                    .insert([patientData])
+                    .from(tableName)
+                    .insert([insertData])
                     .select()
                     .single();
-                    
+
                 if (error) {
-                    // If column doesn't exist, try without details_filled_time
                     if (error.message && error.message.includes('details_filled_time')) {
                         console.warn('details_filled_time column not found, saving without it');
-                        delete patientData.details_filled_time;
-                        
+                        delete insertData.details_filled_time;
                         const { data: retryData, error: retryError } = await supabaseClient
-                            .from('patients')
-                            .insert([patientData])
+                            .from(tableName)
+                            .insert([insertData])
                             .select()
                             .single();
-                            
                         if (retryError) throw retryError;
-                        
-                        // Store the timestamp locally for display
                         retryData.details_filled_time = detailsFilledTime;
-                        patients.unshift(retryData);
-                        showToast('Patient registered successfully! Patient ID: ' + patientId, 'success');
+                        // Add to local arrays
+                        if (isControl) {
+                            controls.unshift({ ...retryData, control_id: retryData.control_id, entry_type: 'control',
+                                patient_id: retryData.control_id, patient_name: retryData.control_name });
+                        } else {
+                            patients.unshift({ ...retryData, entry_type: 'patient' });
+                        }
+                        allEntries = [...patients, ...controls];
+                        const typeLabel = isControl ? 'Control' : 'Patient';
+                        showToast(`${typeLabel} registered successfully! ID: ${patientId}`, 'success');
                     } else {
                         throw error;
                     }
                 } else {
-                    patients.unshift(data);
-                    showToast('Patient registered successfully! Patient ID: ' + patientId, 'success');
+                    if (isControl) {
+                        controls.unshift({ ...data, entry_type: 'control', patient_id: data.control_id,
+                            patient_name: data.control_name });
+                    } else {
+                        patients.unshift({ ...data, entry_type: 'patient' });
+                    }
+                    allEntries = [...patients, ...controls];
+                    const typeLabel = isControl ? 'Control' : 'Patient';
+                    showToast(`${typeLabel} registered successfully! ID: ${patientId}`, 'success');
                 }
-                
+
                 resetForm();
                 updateDashboard();
                 renderPatientsTable();
+                renderControlsTable();
                 renderSamplesTable();
                 renderProfile();
                 populateReportSelect();
-                if (data) {
-                    currentPatient = data;
+                renderStickerSelection();
+                // Find the newly added entry
+                const newEntry = allEntries.find(p => p.patient_id === patientId);
+                if (newEntry) {
+                    currentPatient = newEntry;
                     viewPatient(patientId);
-                } else {
-                    const newPatient = patients.find(p => p.patient_id === patientId);
-                    if (newPatient) {
-                        currentPatient = newPatient;
-                        viewPatient(patientId);
-                    }
                 }
             } catch (error) {
                 console.error('Save error:', error);
-                showToast('Error saving patient: ' + error.message, 'error');
+                showToast('Error saving: ' + error.message, 'error');
             }
         }
 
@@ -3744,28 +4270,34 @@
             document.getElementById('patientIdDisplay').textContent = 'ID: Auto';
             document.getElementById('patientIdDisplay').style.color = '';
             document.getElementById('sampleIdDisplay').textContent = 'Sample ID: Auto';
-            
+            document.getElementById('sampleIdDisplay').style.color = '';
+
             selectedExistingPatient = null;
             document.getElementById('selectedPatientInfo').style.display = 'none';
             document.getElementById('patientSearch').value = '';
             document.getElementById('patientSearchResults').classList.remove('show');
-            
+
+            document.querySelectorAll('input[name="entryType"]').forEach(r => {
+                r.checked = r.value === 'patient';
+            });
+            toggleEntryType();
+
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('sampleDate').value = today;
-            document.getElementById('sampleTime').value = new Date().toTimeString().slice(0,5);
+            document.getElementById('sampleTime').value = new Date().toTimeString().slice(0, 5);
         }
 
         // ============================================================
         // REPORT HTML
         // ============================================================
-        function generateReportHTML(patient) {
-            const statusClass = patient.status === 'Completed' ? 'success' :
-                patient.status === 'Collected' ? 'primary' : 'warning';
-            const testCount = (patient.tests || []).length || 1;
-            const perTestPrice = (patient.total_amount / testCount);
-            
-            // Format details filled time
-            const detailsTime = patient.details_filled_time ? new Date(patient.details_filled_time) : new Date();
+        function generateReportHTML(entry) {
+            const statusClass = entry.status === 'Completed' ? 'success' :
+                entry.status === 'Collected' ? 'primary' : 'warning';
+            const testCount = (entry.tests || []).length || 1;
+            const perTestPrice = (entry.total_amount / testCount);
+            const isControl = entry.entry_type === 'control';
+
+            const detailsTime = entry.details_filled_time ? new Date(entry.details_filled_time) : new Date();
             const formattedDetailsTime = detailsTime.toLocaleString('en-US', {
                 year: 'numeric',
                 month: '2-digit',
@@ -3776,7 +4308,7 @@
                 hour12: true
             });
 
-            const registeredDate = patient.created_at ? new Date(patient.created_at) : new Date();
+            const registeredDate = entry.created_at ? new Date(entry.created_at) : new Date();
             const formattedRegistered = registeredDate.toLocaleString('en-US', {
                 year: 'numeric',
                 month: '2-digit',
@@ -3787,55 +4319,59 @@
                 hour12: true
             });
 
-            const dateTime = patient.sample_date ? patient.sample_date + (patient.sample_time ? ' at ' + patient.sample_time : '') : 'N/A';
+            const dateTime = entry.sample_date ? entry.sample_date + (entry.sample_time ? ' at ' + entry.sample_time :
+                '') : 'N/A';
+
+            const typeLabel = isControl ? '🧪 CONTROL' : '👤 PATIENT';
 
             return `
                 <div class="report-preview">
                     <div class="report-header">
                         <h1>🔬 SLIBTEC Diagnostic Lab</h1>
-                        <div class="subtitle">${patient.hospital||''} | ${patient.department||''}</div>
+                        <div class="subtitle">${entry.hospital||''} | ${entry.department||''}</div>
                         <div style="margin-top:0.5rem;">
-                            <span class="status-badge ${statusClass}">${patient.status||'Pending'}</span>
-                            <span class="status-badge ${patient.paid?'success':'danger'}" style="margin-left:0.5rem;">${patient.paid?'✅ Paid':'❌ Unpaid'}</span>
-                            <span class="status-badge ${patient.report_delivered?'success':'warning'}" style="margin-left:0.5rem;">${patient.report_delivered?'📬 Delivered':'⏳ Pending'}</span>
+                            <span class="badge ${isControl?'badge-control':'badge-primary'}" style="font-size:0.85rem;padding:0.3rem 1rem;">${typeLabel}</span>
+                            <span class="status-badge ${statusClass}" style="margin-left:0.5rem;">${entry.status||'Pending'}</span>
+                            <span class="status-badge ${entry.paid?'success':'danger'}" style="margin-left:0.5rem;">${entry.paid?'✅ Paid':'❌ Unpaid'}</span>
+                            <span class="status-badge ${entry.report_delivered?'success':'warning'}" style="margin-left:0.5rem;">${entry.report_delivered?'📬 Delivered':'⏳ Pending'}</span>
                         </div>
                         <div style="margin-top:0.3rem;font-size:0.85rem;color:#546e7a;">
                             Details Filled: ${formattedDetailsTime} | Registered: ${formattedRegistered}
                         </div>
                     </div>
-                    <div class="report-section"><h3>Patient Information</h3>
+                    <div class="report-section"><h3>${isControl?'Control':'Patient'} Information</h3>
                         <div class="report-grid">
-                            <div class="report-item"><strong>Patient ID:</strong> <span class="value">${patient.patient_id}</span></div>
-                            <div class="report-item"><strong>Sample ID:</strong> <span class="value">${patient.sample_id}</span></div>
-                            <div class="report-item"><strong>Name:</strong> <span class="value">${patient.patient_name}</span></div>
-                            <div class="report-item"><strong>Age:</strong> <span class="value">${patient.age}</span></div>
-                            <div class="report-item"><strong>Gender:</strong> <span class="value">${patient.gender}</span></div>
-                            <div class="report-item"><strong>Mobile:</strong> <span class="value">${patient.mobile}</span></div>
-                            <div class="report-item"><strong>NIC:</strong> <span class="value">${patient.nic||'N/A'}</span></div>
-                            <div class="report-item"><strong>DOB:</strong> <span class="value">${patient.dob}</span></div>
+                            <div class="report-item"><strong>${isControl?'Control ID':'Patient ID'}:</strong> <span class="value">${entry.patient_id}</span></div>
+                            <div class="report-item"><strong>Sample ID:</strong> <span class="value">${entry.sample_id}</span></div>
+                            <div class="report-item"><strong>Name:</strong> <span class="value">${entry.patient_name}</span></div>
+                            <div class="report-item"><strong>Age:</strong> <span class="value">${entry.age}</span></div>
+                            <div class="report-item"><strong>Gender:</strong> <span class="value">${entry.gender}</span></div>
+                            <div class="report-item"><strong>Mobile:</strong> <span class="value">${entry.mobile}</span></div>
+                            <div class="report-item"><strong>NIC:</strong> <span class="value">${entry.nic||'N/A'}</span></div>
+                            <div class="report-item"><strong>DOB:</strong> <span class="value">${entry.dob}</span></div>
                         </div>
                     </div>
-                    <div class="report-section"><h3>Address</h3><p style="margin:0.3rem 0;">${patient.address}</p></div>
-                    <div class="report-section"><h3>Clinical Details</h3><p style="margin:0.2rem 0;"><strong>Consultant:</strong> ${patient.consultant}</p><p style="margin:0.2rem 0;"><strong>Clinical Presentation:</strong> ${patient.clinical_presentation}</p></div>
+                    <div class="report-section"><h3>Address</h3><p style="margin:0.3rem 0;">${entry.address}</p></div>
+                    <div class="report-section"><h3>Clinical Details</h3><p style="margin:0.2rem 0;"><strong>Consultant:</strong> ${entry.consultant}</p><p style="margin:0.2rem 0;"><strong>Clinical Presentation:</strong> ${entry.clinical_presentation}</p></div>
                     <div class="report-section"><h3>Sample Details</h3>
                         <div class="report-grid">
-                            <div class="report-item"><strong>Type:</strong> <span class="value">${patient.sample_type}</span></div>
+                            <div class="report-item"><strong>Type:</strong> <span class="value">${entry.sample_type}</span></div>
                             <div class="report-item"><strong>Date & Time:</strong> <span class="value">${dateTime}</span></div>
                             <div class="report-item"><strong>Details Filled Time:</strong> <span class="value">${formattedDetailsTime}</span></div>
                         </div>
                     </div>
                     <div class="report-section"><h3>Tests Performed</h3>
-                        <ul class="test-list">${(patient.tests||[]).map(t => `<li><span>${t}</span><span style="font-weight:bold;color:#1a237e;">${formatPrice(perTestPrice)}</span></li>`).join('')}</ul>
-                        <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:2px solid #1a237e;text-align:right;"><strong style="font-size:1.1rem;">Total Amount: ${formatPrice(patient.total_amount)}</strong></div>
+                        <ul class="test-list">${(entry.tests||[]).map(t => `<li><span>${t}</span><span style="font-weight:bold;color:#1a237e;">${formatPrice(perTestPrice)}</span></li>`).join('')}</ul>
+                        <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:2px solid #1a237e;text-align:right;"><strong style="font-size:1.1rem;">Total Amount: ${formatPrice(entry.total_amount)}</strong></div>
                     </div>
                     <div class="report-section"><h3>Payment Details</h3>
                         <div class="report-grid">
-                            <div class="report-item"><strong>Method:</strong> <span class="value">${patient.payment_method}</span></div>
-                            <div class="report-item"><strong>Status:</strong> <span class="value">${patient.paid?'✅ Paid':'❌ Unpaid'}</span></div>
+                            <div class="report-item"><strong>Method:</strong> <span class="value">${entry.payment_method}</span></div>
+                            <div class="report-item"><strong>Status:</strong> <span class="value">${entry.paid?'✅ Paid':'❌ Unpaid'}</span></div>
                         </div>
                     </div>
-                    <div class="report-section"><h3>Report Delivery</h3><p><strong>Status:</strong> ${patient.report_delivered?'📬 Delivered':'⏳ Pending'}</p></div>
-                    ${patient.report_file ? `<div class="report-section"><h3>📄 Lab Report</h3><p><strong>Report File:</strong> ${patient.report_file}</p><button class="btn btn-primary" onclick="viewReport('${patient.report_file}')" style="margin-top:0.5rem;">👁️ View Report</button></div>` : ''}
+                    <div class="report-section"><h3>Report Delivery</h3><p><strong>Status:</strong> ${entry.report_delivered?'📬 Delivered':'⏳ Pending'}</p></div>
+                    ${entry.report_file ? `<div class="report-section"><h3>📄 Lab Report</h3><p><strong>Report File:</strong> ${entry.report_file}</p><button class="btn btn-primary" onclick="viewReport('${entry.report_file}')" style="margin-top:0.5rem;">👁️ View Report</button></div>` : ''}
                     <div class="report-footer"><p>Generated on ${new Date().toLocaleString()}</p><p style="font-size:0.7rem;color:#999;">This is a computer-generated report. No signature required.</p></div>
                 </div>
             `;
@@ -3845,10 +4381,10 @@
         // VIEW PATIENT
         // ============================================================
         function viewPatient(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
-            if (!patient) { showToast('Patient not found', 'error'); return; }
-            currentPatient = patient;
-            document.getElementById('modalBody').innerHTML = generateReportHTML(patient);
+            const entry = allEntries.find(p => p.patient_id === patientId);
+            if (!entry) { showToast('Entry not found', 'error'); return; }
+            currentPatient = entry;
+            document.getElementById('modalBody').innerHTML = generateReportHTML(entry);
             document.getElementById('patientModal').classList.add('active');
             document.getElementById('navLinks').classList.remove('open');
             document.getElementById('hamburgerBtn').classList.remove('active');
@@ -3862,7 +4398,7 @@
         // PDF GENERATION
         // ============================================================
         async function generatePDF() {
-            if (!currentPatient) { showToast('No patient selected', 'error'); return; }
+            if (!currentPatient) { showToast('No entry selected', 'error'); return; }
             showToast('Generating PDF...', 'info');
             try {
                 const reportHTML = generateReportHTML(currentPatient);
@@ -3897,92 +4433,489 @@
         }
 
         function generatePDFForPatient(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
-            if (patient) { currentPatient = patient;
-                generatePDF(); } else { showToast('Patient not found', 'error'); }
+            const entry = allEntries.find(p => p.patient_id === patientId);
+            if (entry) { currentPatient = entry;
+                generatePDF(); } else { showToast('Entry not found', 'error'); }
         }
 
         // ============================================================
-        // BARCODE
+        // QR CODE
         // ============================================================
-        function generateCustomBarcode() {
-            const input = document.getElementById('barcodeInput').value.trim() || 'SMP-' + Date.now();
-            const type = document.getElementById('barcodeType').value;
-            const width = parseInt(document.getElementById('barcodeWidth').value) || 2;
-            const height = parseInt(document.getElementById('barcodeHeight').value) || 100;
+        function generateQRForPatient(sampleId) {
+            const entry = allEntries.find(p => p.sample_id === sampleId);
+            if (!entry) {
+                showToast('Sample not found', 'error');
+                return;
+            }
+            const input = sampleId;
+            const dateStr = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const isControl = entry.entry_type === 'control';
+            const brandColor = isControl ? '#7b1fa2' : '#1a237e';
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.display = 'none';
+            document.body.appendChild(tempDiv);
             try {
-                JsBarcode("#barcode", input, { format: type, width, height, displayValue: true, fontSize: 20, margin: 10 });
-                showToast('Barcode generated for: ' + input, 'success');
+                const qr = new QRCode(tempDiv, {
+                    text: input,
+                    width: 150,
+                    height: 150,
+                    colorDark: brandColor,
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                setTimeout(() => {
+                    const canvas = tempDiv.querySelector('canvas');
+                    if (canvas) {
+                        const dataUrl = canvas.toDataURL('image/png');
+                        const win = window.open('', '_blank', 'width=400,height=300');
+                        if (!win) {
+                            showToast('Please allow popups', 'error');
+                            document.body.removeChild(tempDiv);
+                            return;
+                        }
+                        const typeLabel = isControl ? 'CONTROL' : 'PATIENT';
+                        win.document.write(`
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>QR Label - ${input}</title>
+                                <style>
+                                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                                    body {
+                                        display: flex;
+                                        justify-content: center;
+                                        align-items: center;
+                                        min-height: 100vh;
+                                        background: white;
+                                        font-family: 'Segoe UI', Arial, sans-serif;
+                                    }
+                                    .qr-print-label {
+                                        width: 40mm;
+                                        height: 20mm;
+                                        padding: 1.5mm 2mm;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 2mm;
+                                        background: white;
+                                        border: 0.5mm solid ${brandColor};
+                                        border-radius: 1mm;
+                                        box-sizing: border-box;
+                                    }
+                                    .qr-left {
+                                        flex: 0 0 16mm;
+                                        width: 16mm;
+                                        height: 16mm;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        background: white;
+                                    }
+                                    .qr-left img {
+                                        width: 16mm;
+                                        height: 16mm;
+                                        object-fit: contain;
+                                    }
+                                    .qr-right {
+                                        flex: 1;
+                                        padding-left: 0.5mm;
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: center;
+                                        align-items: flex-start;
+                                        gap: 0.3mm;
+                                        min-width: 0;
+                                    }
+                                    .qr-right .brand {
+                                        font-size: 3.8mm;
+                                        font-weight: 900;
+                                        color: ${brandColor};
+                                        letter-spacing: 0.3mm;
+                                        line-height: 1.05;
+                                    }
+                                    .qr-right .sub {
+                                        font-size: 2.2mm;
+                                        color: #455a64;
+                                        font-weight: 600;
+                                        letter-spacing: 0.2mm;
+                                    }
+                                    .qr-right .date-line {
+                                        font-size: 1.8mm;
+                                        color: #78909c;
+                                        font-weight: 400;
+                                        margin-top: 0.2mm;
+                                    }
+                                    .qr-right .divider {
+                                        width: 100%;
+                                        height: 0.2mm;
+                                        background: ${brandColor};
+                                        opacity: 0.25;
+                                        margin: 0.2mm 0;
+                                    }
+                                    .qr-right .id-label {
+                                        font-size: 1.8mm;
+                                        color: ${brandColor};
+                                        font-weight: 500;
+                                        background: #f0f2f5;
+                                        padding: 0.2mm 1mm;
+                                        border-radius: 0.5mm;
+                                        font-family: 'Courier New', monospace;
+                                        letter-spacing: 0.2mm;
+                                        max-width: 100%;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                        white-space: nowrap;
+                                    }
+                                    .qr-right .type-tag {
+                                        font-size: 1.6mm;
+                                        color: white;
+                                        background: ${brandColor};
+                                        padding: 0.1mm 1.2mm;
+                                        border-radius: 0.5mm;
+                                        font-weight: 700;
+                                        letter-spacing: 0.3mm;
+                                    }
+                                    @page {
+                                        size: 40mm 20mm;
+                                        margin: 0;
+                                    }
+                                    @media print {
+                                        body { margin: 0; padding: 0; }
+                                        .qr-print-label { box-shadow: none; border: 0.3mm solid ${brandColor}; }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="qr-print-label">
+                                    <div class="qr-left">
+                                        <img src="${dataUrl}" alt="QR" />
+                                    </div>
+                                    <div class="qr-right">
+                                        <div class="brand">SLIBTEC</div>
+                                        <div class="sub">Diagnostic Lab</div>
+                                        <div class="divider"></div>
+                                        <div class="id-label">${input}</div>
+                                        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                                            <span class="type-tag">${typeLabel}</span>
+                                            <span class="date-line">${dateStr}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <script>
+                                    window.onload = function() {
+                                        setTimeout(function() { window.print(); }, 500);
+                                    };
+                                    window.onafterprint = function() { window.close(); };
+                                <\/script>
+                            </body>
+                            </html>
+                        `);
+                        win.document.close();
+                        document.body.removeChild(tempDiv);
+                    } else {
+                        document.body.removeChild(tempDiv);
+                        showToast('QR generation failed', 'error');
+                    }
+                }, 100);
             } catch (e) {
-                showToast('Error generating barcode: ' + e.message, 'error');
+                document.body.removeChild(tempDiv);
+                console.error('QR generation error:', e);
+                showToast('Error generating QR: ' + e.message, 'error');
             }
         }
 
-        function generateBarcodeForPatient(sampleId) {
-            document.getElementById('barcodeInput').value = sampleId || 'SMP-' + Date.now();
-            generateCustomBarcode();
-            showSection('barcodes');
-            document.getElementById('navLinks').classList.remove('open');
-            document.getElementById('hamburgerBtn').classList.remove('active');
-        }
-
-        function printBarcode() {
-            const svg = document.getElementById('barcode');
-            if (!svg.innerHTML) { showToast('Please generate a barcode first', 'warning'); return; }
-            const win = window.open('', '_blank');
-            win.document.write(
-                `<html><head><title>Barcode</title><style>body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}</style></head><body>${svg.outerHTML}</body></html>`
-                );
-            win.document.close();
-            win.print();
-        }
-
-        function downloadBarcode() {
-            const svg = document.getElementById('barcode');
-            if (!svg.innerHTML) { showToast('Please generate a barcode first', 'warning'); return; }
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.onload = function() {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                const link = document.createElement('a');
-                link.download = 'barcode.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                showToast('Barcode downloaded!', 'success');
-            };
-            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
-        }
-
-        function showBarcodeModal() {
-            if (currentPatient) {
-                generateBarcodeForPatient(currentPatient.sample_id);
+        function showQRModal() {
+            if (currentPatient && currentPatient.sample_id) {
+                generateQRForPatient(currentPatient.sample_id);
                 closeModal();
+            } else {
+                showToast('No sample ID available for this entry', 'warning');
             }
+        }
+
+        // ============================================================
+        // STICKER SHEET FUNCTIONS
+        // ============================================================
+        function applyStickerSettings() {
+            const rows = parseInt(document.getElementById('stickerRows').value) || 5;
+            const width = parseFloat(document.getElementById('stickerWidth').value) || 40;
+            const height = parseFloat(document.getElementById('stickerHeight').value) || 20;
+            const colGap = parseFloat(document.getElementById('stickerColGap').value) || 5;
+            const rowGap = parseFloat(document.getElementById('stickerRowGap').value) || 5;
+
+            stickerSettings.rows = Math.max(1, Math.min(15, rows));
+            stickerSettings.width = Math.max(20, Math.min(80, width));
+            stickerSettings.height = Math.max(10, Math.min(40, height));
+            stickerSettings.colGap = Math.max(1, Math.min(15, colGap));
+            stickerSettings.rowGap = Math.max(1, Math.min(15, rowGap));
+
+            showToast('Settings applied', 'success');
+        }
+
+        function filterStickerSamples() {
+            const query = document.getElementById('stickerSearchInput').value.toLowerCase().trim();
+            const items = document.querySelectorAll('.sticker-selection-item');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function renderStickerSelection() {
+            const grid = document.getElementById('stickerSelectionGrid');
+            const noMsg = document.getElementById('noSamplesMsg');
+            if (!grid) return;
+
+            const hasSamples = allEntries.some(p => p.sample_id);
+            if (!hasSamples) {
+                grid.style.display = 'none';
+                noMsg.style.display = 'block';
+                return;
+            }
+            noMsg.style.display = 'none';
+            grid.style.display = 'grid';
+
+            grid.innerHTML = allEntries.filter(p => p.sample_id).map(p => {
+                const isControl = p.entry_type === 'control';
+                const typeLabel = isControl ? '🧪' : '👤';
+                const color = isControl ? '#7b1fa2' : '#1a237e';
+                return `
+                <div class="sticker-selection-item" data-sample-id="${p.sample_id}" style="border-left:3px solid ${color};">
+                    <input type="checkbox" class="sticker-checkbox" data-sample-id="${p.sample_id}" checked />
+                    <span class="sample-id" style="color:${color};">${p.sample_id}</span>
+                    <span class="patient-name">${p.patient_name}</span>
+                    <span style="font-size:0.7rem;color:var(--text-light);margin-left:auto;">${typeLabel}</span>
+                </div>
+            `}).join('');
+
+            document.getElementById('stickerSearchInput').value = '';
+            filterStickerSamples();
+        }
+
+        function selectAllStickers() {
+            document.querySelectorAll('.sticker-checkbox').forEach(cb => cb.checked = true);
+        }
+
+        function deselectAllStickers() {
+            document.querySelectorAll('.sticker-checkbox').forEach(cb => cb.checked = false);
+        }
+
+        function generateStickerSheet() {
+            const selected = [];
+            document.querySelectorAll('.sticker-checkbox:checked').forEach(cb => {
+                const sampleId = cb.dataset.sampleId;
+                const entry = allEntries.find(p => p.sample_id === sampleId);
+                if (entry) {
+                    selected.push({ sampleId, patientName: entry.patient_name, isControl: entry.entry_type ===
+                            'control' });
+                }
+            });
+
+            if (selected.length === 0) {
+                showToast('Please select at least one sample', 'warning');
+                return;
+            }
+
+            applyStickerSettings();
+
+            const rows = stickerSettings.rows;
+            const width = stickerSettings.width;
+            const height = stickerSettings.height;
+            const colGap = stickerSettings.colGap;
+            const rowGap = stickerSettings.rowGap;
+
+            const maxStickers = rows * 2;
+            const toPrint = selected.slice(0, maxStickers);
+
+            const container = document.getElementById('stickerSheetContainer');
+            const sheet = document.getElementById('stickerSheet');
+            sheet.innerHTML = '';
+
+            sheet.style.gridTemplateColumns = `repeat(2, ${width}mm)`;
+            sheet.style.gap = `${rowGap}mm ${colGap}mm`;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.display = 'none';
+            document.body.appendChild(tempDiv);
+
+            let generated = 0;
+            toPrint.forEach((item, index) => {
+                const qrDiv = document.createElement('div');
+                tempDiv.appendChild(qrDiv);
+                try {
+                    const isControl = item.isControl;
+                    const color = isControl ? '#7b1fa2' : '#1a237e';
+                    const qr = new QRCode(qrDiv, {
+                        text: item.sampleId,
+                        width: 150,
+                        height: 150,
+                        colorDark: color,
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    setTimeout(() => {
+                        const canvas = qrDiv.querySelector('canvas');
+                        if (canvas) {
+                            const dataUrl = canvas.toDataURL('image/png');
+                            const sticker = createStickerElement(item.sampleId, dataUrl, width, height, isControl);
+                            sheet.appendChild(sticker);
+                            generated++;
+                            if (generated === toPrint.length) {
+                                container.classList.add('active');
+                                document.getElementById('printStickerBtn').style.display = 'inline-flex';
+                                showToast(`Sticker sheet generated with ${toPrint.length} stickers!`, 'success');
+                                document.body.removeChild(tempDiv);
+                            }
+                        }
+                    }, 100);
+                } catch (e) {
+                    console.error('QR generation error for', item.sampleId, e);
+                    const sticker = createStickerElement(item.sampleId, '', width, height, item.isControl);
+                    sheet.appendChild(sticker);
+                    generated++;
+                    if (generated === toPrint.length) {
+                        container.classList.add('active');
+                        document.getElementById('printStickerBtn').style.display = 'inline-flex';
+                        showToast('Sticker sheet generated with some errors', 'warning');
+                        document.body.removeChild(tempDiv);
+                    }
+                }
+            });
+
+            if (toPrint.length === 0) {
+                document.body.removeChild(tempDiv);
+            }
+        }
+
+        function createStickerElement(sampleId, qrDataUrl, width, height, isControl = false) {
+            const color = isControl ? '#7b1fa2' : '#1a237e';
+            const typeLabel = isControl ? 'CONTROL' : 'PATIENT';
+
+            const sticker = document.createElement('div');
+            sticker.className = 'sticker-item';
+            sticker.style.width = width + 'mm';
+            sticker.style.height = height + 'mm';
+            sticker.style.minHeight = height + 'mm';
+            sticker.style.border = `0.3mm solid ${color}`;
+            sticker.style.borderRadius = '0.5mm';
+            sticker.style.padding = '1mm';
+            sticker.style.display = 'flex';
+            sticker.style.alignItems = 'center';
+            sticker.style.background = 'white';
+
+            const qrDiv = document.createElement('div');
+            qrDiv.className = 'sticker-qr';
+            qrDiv.style.flex = '0 0 40%';
+            qrDiv.style.height = '100%';
+            qrDiv.style.display = 'flex';
+            qrDiv.style.alignItems = 'center';
+            qrDiv.style.justifyContent = 'center';
+            qrDiv.style.padding = '1mm';
+            qrDiv.style.background = 'white';
+
+            if (qrDataUrl) {
+                const img = document.createElement('img');
+                img.src = qrDataUrl;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                img.style.width = 'auto';
+                img.style.height = 'auto';
+                img.style.objectFit = 'contain';
+                qrDiv.appendChild(img);
+            } else {
+                qrDiv.textContent = 'ERROR';
+                qrDiv.style.color = 'red';
+                qrDiv.style.fontSize = '2mm';
+            }
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'sticker-text';
+            textDiv.style.flex = '1';
+            textDiv.style.paddingLeft = '1mm';
+            textDiv.style.display = 'flex';
+            textDiv.style.flexDirection = 'column';
+            textDiv.style.justifyContent = 'center';
+            textDiv.style.alignItems = 'flex-start';
+            textDiv.style.gap = '0.5mm';
+            textDiv.style.minWidth = '0';
+            textDiv.style.height = '100%';
+
+            const brandSize = Math.min(3.2, height * 0.16);
+            const subSize = Math.min(1.8, height * 0.09);
+            const idSize = Math.min(1.6, height * 0.08);
+            const tagSize = Math.min(1.4, height * 0.07);
+
+            textDiv.innerHTML = `
+                <div style="font-size:${brandSize}mm;font-weight:900;color:${color};letter-spacing:0.3mm;line-height:1.1;">SLIBTEC</div>
+                <div style="font-size:${subSize}mm;color:#455a64;font-weight:600;letter-spacing:0.2mm;">Diagnostic Lab</div>
+                <div style="font-size:${idSize}mm;color:${color};background:#f0f2f5;padding:0.2mm 0.8mm;border-radius:0.5mm;font-family:'Courier New',monospace;letter-spacing:0.2mm;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sampleId}</div>
+                <div style="font-size:${tagSize}mm;color:white;background:${color};padding:0.1mm 1.2mm;border-radius:0.5mm;font-weight:700;letter-spacing:0.3mm;">${typeLabel}</div>
+            `;
+
+            sticker.appendChild(qrDiv);
+            sticker.appendChild(textDiv);
+            return sticker;
+        }
+
+        function printStickerSheet() {
+            const container = document.getElementById('stickerSheetContainer');
+            if (!container.classList.contains('active')) {
+                showToast('Generate a sticker sheet first', 'warning');
+                return;
+            }
+            const controls = document.querySelector('.sticker-controls');
+            controls.style.display = 'none';
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.zIndex = '9999';
+            container.style.background = 'white';
+            container.style.overflow = 'auto';
+            container.style.padding = '5mm';
+            void container.offsetHeight;
+            window.print();
+            setTimeout(() => {
+                controls.style.display = 'block';
+                container.style.position = '';
+                container.style.top = '';
+                container.style.left = '';
+                container.style.width = '';
+                container.style.height = '';
+                container.style.zIndex = '';
+                container.style.background = '';
+                container.style.overflow = '';
+                container.style.padding = '';
+            }, 1000);
         }
 
         // ============================================================
         // STATUS UPDATE
         // ============================================================
         async function updateStatus(patientId) {
-            const patient = patients.find(p => p.patient_id === patientId);
-            if (!patient) return;
+            const entry = allEntries.find(p => p.patient_id === patientId);
+            if (!entry) return;
             const statuses = ['Pending', 'Collected', 'Processing', 'Completed'];
-            const current = patient.status || 'Pending';
+            const current = entry.status || 'Pending';
             const idx = statuses.indexOf(current);
             const next = statuses[(idx + 1) % statuses.length];
             if (confirm(`Update status from "${current}" to "${next}"?`)) {
+                const tableName = entry.entry_type === 'control' ? 'controls' : 'patients';
+                const idField = entry.entry_type === 'control' ? 'control_id' : 'patient_id';
                 try {
                     const { error } = await supabaseClient
-                        .from('patients')
+                        .from(tableName)
                         .update({ status: next })
-                        .eq('patient_id', patientId);
+                        .eq(idField, patientId);
                     if (error) throw error;
-                    patient.status = next;
+                    entry.status = next;
                     renderPatientsTable();
+                    renderControlsTable();
                     renderSamplesTable();
                     updateDashboard();
                     showToast(`Status updated to ${next}`, 'success');
@@ -3996,27 +4929,34 @@
         // ============================================================
         // EXPORT
         // ============================================================
-        function exportData() {
-            if (patients.length === 0) { showToast('No data to export', 'warning'); return; }
-            const headers = ['Patient ID', 'Sample ID', 'Name', 'Age', 'Gender', 'Mobile', 'Address', 'Hospital',
-                'Department', 'Consultant', 'Sample Type', 'Sample Date', 'Sample Time', 'Details Filled Time', 'Tests', 'Total Amount', 'Payment', 'Paid',
-                'Report Delivered', 'Status', 'Report File'
+        function exportData(type = 'patient') {
+            let data = type === 'patient' ? patients : controls;
+            // For controls, we need to map control fields to same headers
+            if (data.length === 0) { showToast('No data to export', 'warning'); return; }
+            const headers = ['Entry ID', 'Sample ID', 'Name', 'Age', 'Gender', 'Mobile', 'Address', 'Hospital',
+                'Department', 'Consultant', 'Sample Type', 'Sample Date', 'Sample Time', 'Details Filled Time', 'Tests',
+                'Total Amount', 'Payment', 'Paid', 'Report Delivered', 'Status', 'Entry Type', 'Report File'
             ];
-            const rows = patients.map(p => [
-                p.patient_id, p.sample_id, p.patient_name, p.age, p.gender, p.mobile, p.address,
-                p.hospital, p.department, p.consultant, p.sample_type, p.sample_date, p.sample_time || '',
-                p.details_filled_time ? new Date(p.details_filled_time).toLocaleString() : '',
-                (p.tests || []).join('; '), p.total_amount.toFixed(2), p.payment_method,
-                p.paid ? 'Yes' : 'No', p.report_delivered ? 'Yes' : 'No', p.status,
-                p.report_file || ''
-            ]);
+            const rows = data.map(p => {
+                const isControl = p.entry_type === 'control';
+                const idField = isControl ? p.control_id : p.patient_id;
+                const nameField = isControl ? p.control_name : p.patient_name;
+                return [
+                    idField, p.sample_id, nameField, p.age, p.gender, p.mobile, p.address,
+                    p.hospital, p.department, p.consultant, p.sample_type, p.sample_date, p.sample_time || '',
+                    p.details_filled_time ? new Date(p.details_filled_time).toLocaleString() : '',
+                    (p.tests || []).join('; '), p.total_amount.toFixed(2), p.payment_method,
+                    p.paid ? 'Yes' : 'No', p.report_delivered ? 'Yes' : 'No', p.status,
+                    p.entry_type || 'patient', p.report_file || ''
+                ];
+            });
             let csv = headers.join(',') + '\n';
             rows.forEach(row => { csv += row.map(cell => `"${cell||''}"`).join(',') + '\n'; });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `patients_${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `${type}s_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             URL.revokeObjectURL(url);
             showToast('Data exported!', 'success');
@@ -4025,30 +4965,45 @@
         // ============================================================
         // NAVIGATION
         // ============================================================
+        let currentSection = 'dashboard';
+
         function showSection(sectionId) {
+            if (currentSection === sectionId) return;
+
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
+            const target = document.getElementById(sectionId);
+            if (target) {
+                target.classList.add('active');
+                if (sectionId === 'patients') renderPatientsTable();
+                if (sectionId === 'controls') renderControlsTable();
+                if (sectionId === 'samples') renderSamplesTable();
+                if (sectionId === 'profile') renderProfile();
+                if (sectionId === 'dashboard') updateDashboard();
+                if (sectionId === 'reports') {
+                    loadUploadedReports();
+                    populateReportSelect();
+                }
+                if (sectionId === 'qrStickers') {
+                    renderStickerSelection();
+                }
+                currentSection = sectionId;
+            }
+
             document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
             const map = {
                 dashboard: 'navDashboard',
                 registration: 'navRegistration',
                 patients: 'navPatients',
+                controls: 'navControls',
                 samples: 'navSamples',
                 reports: 'navReports',
                 tests: 'navTests',
-                barcodes: 'navBarcodes',
+                qrStickers: 'navQrStickers',
                 profile: 'navProfile'
             };
             const navBtn = document.getElementById(map[sectionId]);
             if (navBtn) navBtn.classList.add('active');
-            if (sectionId === 'patients') renderPatientsTable();
-            if (sectionId === 'samples') renderSamplesTable();
-            if (sectionId === 'profile') renderProfile();
-            if (sectionId === 'dashboard') updateDashboard();
-            if (sectionId === 'reports') {
-                loadUploadedReports();
-                populateReportSelect();
-            }
+
             if (window.innerWidth <= 767) {
                 document.getElementById('navLinks').classList.remove('open');
                 document.getElementById('hamburgerBtn').classList.remove('active');
@@ -4077,16 +5032,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
-            
+
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('sampleDate').value = today;
-            document.getElementById('sampleTime').value = new Date().toTimeString().slice(0,5);
+            document.getElementById('sampleTime').value = new Date().toTimeString().slice(0, 5);
             const d = new Date();
             d.setFullYear(d.getFullYear() - 25);
             document.getElementById('patientDOB').value = d.toISOString().split('T')[0];
             calculateAge();
-            
+
             loadTests();
+            toggleEntryType();
         });
 
         // ============================================================
@@ -4114,13 +5070,11 @@
         window.closeModal = closeModal;
         window.generatePDF = generatePDF;
         window.generatePDFForPatient = generatePDFForPatient;
-        window.generateCustomBarcode = generateCustomBarcode;
-        window.generateBarcodeForPatient = generateBarcodeForPatient;
-        window.printBarcode = printBarcode;
-        window.downloadBarcode = downloadBarcode;
-        window.showBarcodeModal = showBarcodeModal;
+        window.generateQRForPatient = generateQRForPatient;
+        window.showQRModal = showQRModal;
         window.updateStatus = updateStatus;
         window.searchPatients = searchPatients;
+        window.searchControls = searchControls;
         window.searchSamples = searchSamples;
         window.filterSamples = filterSamples;
         window.togglePayment = togglePayment;
@@ -4146,6 +5100,18 @@
         window.updateEditTestTotal = updateEditTestTotal;
         window.getNextPatientId = getNextPatientId;
         window.getNextSampleId = getNextSampleId;
+        window.getNextControlId = getNextControlId;
+        window.getNextControlSampleId = getNextControlSampleId;
+        window.renderStickerSelection = renderStickerSelection;
+        window.selectAllStickers = selectAllStickers;
+        window.deselectAllStickers = deselectAllStickers;
+        window.generateStickerSheet = generateStickerSheet;
+        window.printStickerSheet = printStickerSheet;
+        window.applyStickerSettings = applyStickerSettings;
+        window.createStickerElement = createStickerElement;
+        window.filterStickerSamples = filterStickerSamples;
+        window.toggleEntryType = toggleEntryType;
+        window.getEntryType = getEntryType;
     </script>
 </body>
 </html>
