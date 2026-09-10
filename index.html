@@ -2305,14 +2305,14 @@
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-header"><div class="card-title"><div class="icon">🔬</div>Tests to Perform</div></div>
+                    <div class="card" id="testsCard">
+                        <div class="card-header"><div class="card-title"><div class="icon">🔬</div>Tests to Perform</div><span class="badge badge-info" id="testsRequiredHint">Select at least one test (patients only)</span></div>
                         <div class="test-grid" id="testGrid"></div>
                         <div class="total-display"><span>Total Amount:</span><span id="testTotalAmount">Rs. 0.00</span></div>
                     </div>
 
-                    <div class="card">
-                        <div class="card-header"><div class="card-title"><div class="icon">💳</div>Payment Details</div></div>
+                    <div class="card" id="paymentCard">
+                        <div class="card-header"><div class="card-title"><div class="icon">💳</div>Payment Details</div><span class="badge badge-info" id="paymentRequiredHint">Required for patients</span></div>
                         <div class="payment-options">
                             <div class="payment-option" onclick="selectPayment('cash')"><div class="icon">💵</div><div><strong>Cash</strong></div></div>
                             <div class="payment-option" onclick="selectPayment('online')"><div class="icon">💳</div><div><strong>Online Transfer</strong></div></div>
@@ -2529,7 +2529,7 @@
                     <input type="hidden" id="editPatientId" />
                     <div class="form-grid">
                         <div class="form-group"><label>Name *</label><input type="text" id="editPatientName" required /></div>
-                        <div class="form-group"><label>Age *</label><input type="number" id="editPatientAge" required min="0" max="120" /></div>
+                        <div class="form-group"><label>Age</label><input type="number" id="editPatientAge" min="0" max="120" /></div>
                         <div class="form-group">
                             <label>Gender *</label>
                             <div class="radio-group">
@@ -2539,7 +2539,7 @@
                         </div>
                         <div class="form-group"><label>NIC</label><input type="text" id="editPatientNIC" placeholder="Enter NIC" /></div>
                         <div class="form-group"><label>Date of Birth</label><input type="date" id="editPatientDOB" /></div>
-                        <div class="form-group"><label>Mobile Number *</label><input type="tel" id="editPatientMobile" required pattern="[0-9]{10}" /></div>
+                        <div class="form-group"><label>Mobile Number</label><input type="tel" id="editPatientMobile" pattern="[0-9]{10}" /></div>
                         <div class="form-group full-width"><label>Address</label><textarea id="editPatientAddress" rows="2"></textarea></div>
                         <div class="form-group"><label>Hospital</label><input type="text" id="editHospitalName" /></div>
                         <div class="form-group"><label>Department</label><input type="text" id="editDepartmentName" /></div>
@@ -2564,6 +2564,7 @@
                     <div class="card" style="margin-top:1rem;">
                         <div class="card-header">
                             <div class="card-title"><div class="icon">🔬</div>Tests to Perform</div>
+                            <span class="badge badge-info" id="editTestsHint">Optional for controls</span>
                         </div>
                         <div class="test-grid" id="editTestGrid"></div>
                         <div class="total-display">
@@ -2716,11 +2717,21 @@
 
         function toggleEntryType() {
             const type = getEntryType();
+            const isControl = type === 'control';
             const hint = document.getElementById('entryTypeHint');
             const idDisplay = document.getElementById('patientIdDisplay');
             const sampleDisplay = document.getElementById('sampleIdDisplay');
-            if (type === 'control') {
-                hint.textContent = 'Control entries will use CON IDs and CONSAM sample IDs.';
+
+            // Patient fields that are required by default
+            const fieldsToToggle = [
+                'patientAge', 'patientDOB', 'patientMobile', 'patientAddress',
+                'hospitalName', 'departmentName', 'consultantName', 'clinicalPresentation',
+                'sampleDate', 'sampleTime', 'sampleType'
+            ];
+
+            // Update ID display hints
+            if (isControl) {
+                hint.textContent = 'Control entries use CON IDs and CONSAM sample IDs. Only Name & Gender are required.';
                 idDisplay.textContent = 'ID: SLIBTECCONXXXXX';
                 sampleDisplay.textContent = 'Sample ID: SLIBTECCONSAMXXXXX';
                 idDisplay.style.color = '#7b1fa2';
@@ -2731,6 +2742,52 @@
                 sampleDisplay.textContent = 'Sample ID: Auto';
                 idDisplay.style.color = '';
                 sampleDisplay.style.color = '';
+            }
+
+            // Toggle required attributes for patient-only fields
+            fieldsToToggle.forEach(fieldId => {
+                const el = document.getElementById(fieldId);
+                if (!el) return;
+                if (isControl) {
+                    el.required = false;
+                    // Optionally clear values? We'll keep them but not require.
+                } else {
+                    // Re-apply required for patient mode
+                    if (['patientAge','patientDOB','patientMobile','patientAddress','hospitalName','departmentName','consultantName','clinicalPresentation','sampleDate','sampleTime','sampleType'].includes(fieldId)) {
+                        el.required = true;
+                    }
+                }
+            });
+
+            // Gender is always required
+            document.querySelectorAll('input[name="gender"]').forEach(r => r.required = true);
+
+            // Update Tests and Payment card hints / visibility
+            const testsCard = document.getElementById('testsCard');
+            const paymentCard = document.getElementById('paymentCard');
+            const testsRequiredHint = document.getElementById('testsRequiredHint');
+            const paymentRequiredHint = document.getElementById('paymentRequiredHint');
+            const editTestsHint = document.getElementById('editTestsHint');
+
+            if (isControl) {
+                testsCard.style.opacity = '0.6';
+                paymentCard.style.opacity = '0.6';
+                testsRequiredHint.textContent = 'Optional for controls (leave unchecked)';
+                paymentRequiredHint.textContent = 'Optional for controls';
+                if (editTestsHint) editTestsHint.textContent = 'Optional for controls';
+                // Uncheck all tests and clear payment
+                document.querySelectorAll('input[name="tests"]').forEach(cb => { cb.checked = false; });
+                document.querySelectorAll('.test-checkbox').forEach(el => el.classList.remove('checked'));
+                document.getElementById('testTotalAmount').textContent = 'Rs. 0.00';
+                document.getElementById('totalAmount').value = '0.00';
+                document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+                document.getElementById('paymentMethod').value = '';
+            } else {
+                testsCard.style.opacity = '1';
+                paymentCard.style.opacity = '1';
+                testsRequiredHint.textContent = 'Select at least one test';
+                paymentRequiredHint.textContent = 'Required for patients';
+                if (editTestsHint) editTestsHint.textContent = 'Select tests';
             }
         }
 
@@ -3019,7 +3076,7 @@
 
             document.getElementById('selectedPatientName').textContent = patient.patient_name;
             document.getElementById('selectedPatientId').textContent = patient.patient_id;
-            document.getElementById('selectedPatientMobile').textContent = patient.mobile;
+            document.getElementById('selectedPatientMobile').textContent = patient.mobile || 'N/A';
             document.getElementById('selectedPatientInfo').style.display = 'block';
 
             document.getElementById('patientSearchResults').classList.remove('show');
@@ -3850,6 +3907,23 @@
                 r.checked = r.value === entry.gender;
             });
 
+            // Adjust required attributes in edit modal based on entry type
+            const isControl = entry.entry_type === 'control';
+            const editFields = ['editPatientAge','editPatientMobile','editPatientDOB','editPatientAddress','editHospitalName','editDepartmentName','editConsultantName','editClinicalPresentation','editSampleDate','editSampleTime','editSampleType'];
+            editFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.required = !isControl;
+                }
+            });
+            // Gender always required
+            document.querySelectorAll('input[name="editGender"]').forEach(r => r.required = true);
+
+            const editTestsHint = document.getElementById('editTestsHint');
+            if (editTestsHint) {
+                editTestsHint.textContent = isControl ? 'Optional for controls' : 'Select tests';
+            }
+
             const patientTests = entry.tests || [];
             setTimeout(() => {
                 document.querySelectorAll('#editTestGrid input[type="checkbox"]').forEach(cb => {
@@ -3874,12 +3948,14 @@
             const patientId = document.getElementById('editPatientId').value;
             const gender = document.querySelector('input[name="editGender"]:checked')?.value;
             const entryType = document.getElementById('editEntryType').value;
+            const isControl = entryType === 'control';
 
             const selectedTests = Array.from(document.querySelectorAll('#editTestGrid input[type="checkbox"]:checked'))
                 .map(cb => cb.value);
 
-            if (selectedTests.length === 0) {
-                showToast('Please select at least one test', 'error');
+            // For patients, tests are required; for controls, optional
+            if (!isControl && selectedTests.length === 0) {
+                showToast('Please select at least one test for a patient', 'error');
                 return;
             }
 
@@ -3890,7 +3966,7 @@
 
             const updatedData = {
                 patient_name: document.getElementById('editPatientName').value.trim(),
-                age: parseInt(document.getElementById('editPatientAge').value),
+                age: parseInt(document.getElementById('editPatientAge').value) || null,
                 gender: gender,
                 nic: document.getElementById('editPatientNIC').value.trim(),
                 dob: document.getElementById('editPatientDOB').value,
@@ -3911,18 +3987,42 @@
                 report_delivered: document.getElementById('editReportDelivered').value === 'true'
             };
 
-            if (!updatedData.patient_name || !updatedData.age || !updatedData.gender || !updatedData.mobile) {
-                showToast('Please fill all required fields', 'error');
+            // Validation: Name and Gender are always required
+            if (!updatedData.patient_name) {
+                showToast('Please enter name', 'error');
                 return;
+            }
+            if (!updatedData.gender) {
+                showToast('Please select gender', 'error');
+                return;
+            }
+
+            // For patients, additional fields required
+            if (!isControl) {
+                if (!updatedData.age || updatedData.age < 0) {
+                    showToast('Please enter valid age', 'error');
+                    return;
+                }
+                if (!updatedData.mobile) {
+                    showToast('Please enter mobile number', 'error');
+                    return;
+                }
             }
 
             const tableName = entryType === 'control' ? 'controls' : 'patients';
             const idField = entryType === 'control' ? 'control_id' : 'patient_id';
 
+            // If control, we need to map control_name
+            const dbData = { ...updatedData };
+            if (isControl) {
+                dbData.control_name = updatedData.patient_name;
+                delete dbData.patient_name;
+            }
+
             try {
                 const { data, error } = await supabaseClient
                     .from(tableName)
-                    .update(updatedData)
+                    .update(dbData)
                     .eq(idField, patientId)
                     .select()
                     .single();
@@ -3932,7 +4032,7 @@
                 if (entryType === 'control') {
                     const idx = controls.findIndex(c => c.control_id === patientId);
                     if (idx !== -1) {
-                        controls[idx] = { ...controls[idx], ...updatedData };
+                        controls[idx] = { ...controls[idx], ...updatedData, patient_name: updatedData.patient_name };
                     }
                 } else {
                     const idx = patients.findIndex(p => p.patient_id === patientId);
@@ -4068,7 +4168,7 @@
         function handleAgeChange() {
             const age = parseInt(document.getElementById('patientAge').value);
             const nicGroup = document.getElementById('nicGroup');
-            if (age < 20) {
+            if (isNaN(age) || age < 20) {
                 nicGroup.style.display = 'none';
                 document.getElementById('patientNIC').required = false;
             } else {
@@ -4108,7 +4208,7 @@
             const detailsFilledTime = new Date().toISOString();
 
             const patientName = document.getElementById('patientName').value.trim();
-            const age = parseInt(document.getElementById('patientAge').value);
+            const age = parseInt(document.getElementById('patientAge').value) || null;
             const gender = document.querySelector('input[name="gender"]:checked')?.value;
             const nic = document.getElementById('patientNIC').value.trim();
             const dob = document.getElementById('patientDOB').value;
@@ -4125,44 +4225,54 @@
             const totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
             const paymentMethod = document.getElementById('paymentMethod').value;
 
+            // Common validations: Name and Gender always required
             if (!patientName) { showToast('Please enter name', 'error'); return; }
-            if (!age || age < 0) { showToast('Please enter valid age', 'error'); return; }
             if (!gender) { showToast('Please select gender', 'error'); return; }
-            if (age >= 20 && !nic) { showToast('NIC is required for patients 20 years or older', 'error'); return; }
-            if (!dob) { showToast('Please select date of birth', 'error'); return; }
-            if (!mobile) { showToast('Please enter mobile number', 'error'); return; }
-            if (!address) { showToast('Please enter address', 'error'); return; }
-            if (!hospital) { showToast('Please enter hospital name', 'error'); return; }
-            if (!department) { showToast('Please enter department', 'error'); return; }
-            if (!consultant) { showToast('Please enter consultant name', 'error'); return; }
-            if (!clinical) { showToast('Please enter clinical presentation', 'error'); return; }
-            if (!sampleDate) { showToast('Please select sample date', 'error'); return; }
-            if (!sampleTime) { showToast('Please select sample time', 'error'); return; }
-            if (!sampleType) { showToast('Please select sample type', 'error'); return; }
-            if (tests.length === 0) { showToast('Please select at least one test', 'error'); return; }
-            if (!paymentMethod) { showToast('Please select a payment method', 'error'); return; }
+
+            // For patients, additional fields required
+            if (!isControl) {
+                if (!age || age < 0) { showToast('Please enter valid age', 'error'); return; }
+                if (age >= 20 && !nic) { showToast('NIC is required for patients 20 years or older', 'error'); return; }
+                if (!dob) { showToast('Please select date of birth', 'error'); return; }
+                if (!mobile) { showToast('Please enter mobile number', 'error'); return; }
+                if (!address) { showToast('Please enter address', 'error'); return; }
+                if (!hospital) { showToast('Please enter hospital name', 'error'); return; }
+                if (!department) { showToast('Please enter department', 'error'); return; }
+                if (!consultant) { showToast('Please enter consultant name', 'error'); return; }
+                if (!clinical) { showToast('Please enter clinical presentation', 'error'); return; }
+                if (!sampleDate) { showToast('Please select sample date', 'error'); return; }
+                if (!sampleTime) { showToast('Please select sample time', 'error'); return; }
+                if (!sampleType) { showToast('Please select sample type', 'error'); return; }
+                if (tests.length === 0) { showToast('Please select at least one test', 'error'); return; }
+                if (!paymentMethod) { showToast('Please select a payment method', 'error'); return; }
+            } else {
+                // For controls, sample date/time/type are optional; but if we want to save, we can.
+                // We will not require them; if not provided, we can set to null or keep empty.
+                // But the DB may expect certain fields; we'll pass null for missing.
+                // We'll not validate them for controls.
+            }
 
             const createdBy = currentUser?.uid || generateUUID();
 
             const baseData = {
                 sample_id: sampleId,
                 patient_name: patientName,
-                age,
+                age: age,
                 gender,
-                nic: age >= 20 ? nic : '',
-                dob,
-                mobile,
-                address,
-                hospital,
-                department,
-                consultant,
-                clinical_presentation: clinical,
-                sample_date: sampleDate,
-                sample_time: sampleTime,
-                sample_type: sampleType,
-                tests,
+                nic: (!isControl && age >= 20) ? nic : '',
+                dob: dob || null,
+                mobile: mobile || '',
+                address: address || '',
+                hospital: hospital || '',
+                department: department || '',
+                consultant: consultant || '',
+                clinical_presentation: clinical || '',
+                sample_date: sampleDate || null,
+                sample_time: sampleTime || null,
+                sample_type: sampleType || '',
+                tests: tests,
                 total_amount: totalAmount,
-                payment_method: paymentMethod,
+                payment_method: paymentMethod || '',
                 status: 'Pending',
                 paid: false,
                 report_delivered: false,
@@ -4179,14 +4289,7 @@
                     control_id: patientId,
                     control_name: patientName
                 };
-                // Remove patient-specific fields if any (we keep same structure but map)
-                // We'll keep control_id and control_name, but we also keep patient_name for UI consistency.
-                // However, the DB has control_name, not patient_name. We'll set both.
-                insertData.control_name = patientName;
-                insertData.patient_name = undefined; // not used in controls table
-                // But we need to keep patient_name for UI? We'll store it in control_name and when reading we map back.
-                // We'll keep the insert as is, but in the load we map control_name -> patient_name.
-                // So we insert control_name and we don't insert patient_name.
+                // Remove patient_name for controls table (it uses control_name)
                 delete insertData.patient_name;
             } else {
                 tableName = 'patients';
@@ -4344,29 +4447,29 @@
                             <div class="report-item"><strong>${isControl?'Control ID':'Patient ID'}:</strong> <span class="value">${entry.patient_id}</span></div>
                             <div class="report-item"><strong>Sample ID:</strong> <span class="value">${entry.sample_id}</span></div>
                             <div class="report-item"><strong>Name:</strong> <span class="value">${entry.patient_name}</span></div>
-                            <div class="report-item"><strong>Age:</strong> <span class="value">${entry.age}</span></div>
+                            <div class="report-item"><strong>Age:</strong> <span class="value">${entry.age||'N/A'}</span></div>
                             <div class="report-item"><strong>Gender:</strong> <span class="value">${entry.gender}</span></div>
-                            <div class="report-item"><strong>Mobile:</strong> <span class="value">${entry.mobile}</span></div>
+                            <div class="report-item"><strong>Mobile:</strong> <span class="value">${entry.mobile||'N/A'}</span></div>
                             <div class="report-item"><strong>NIC:</strong> <span class="value">${entry.nic||'N/A'}</span></div>
-                            <div class="report-item"><strong>DOB:</strong> <span class="value">${entry.dob}</span></div>
+                            <div class="report-item"><strong>DOB:</strong> <span class="value">${entry.dob||'N/A'}</span></div>
                         </div>
                     </div>
-                    <div class="report-section"><h3>Address</h3><p style="margin:0.3rem 0;">${entry.address}</p></div>
-                    <div class="report-section"><h3>Clinical Details</h3><p style="margin:0.2rem 0;"><strong>Consultant:</strong> ${entry.consultant}</p><p style="margin:0.2rem 0;"><strong>Clinical Presentation:</strong> ${entry.clinical_presentation}</p></div>
+                    <div class="report-section"><h3>Address</h3><p style="margin:0.3rem 0;">${entry.address||'N/A'}</p></div>
+                    <div class="report-section"><h3>Clinical Details</h3><p style="margin:0.2rem 0;"><strong>Consultant:</strong> ${entry.consultant||'N/A'}</p><p style="margin:0.2rem 0;"><strong>Clinical Presentation:</strong> ${entry.clinical_presentation||'N/A'}</p></div>
                     <div class="report-section"><h3>Sample Details</h3>
                         <div class="report-grid">
-                            <div class="report-item"><strong>Type:</strong> <span class="value">${entry.sample_type}</span></div>
+                            <div class="report-item"><strong>Type:</strong> <span class="value">${entry.sample_type||'N/A'}</span></div>
                             <div class="report-item"><strong>Date & Time:</strong> <span class="value">${dateTime}</span></div>
                             <div class="report-item"><strong>Details Filled Time:</strong> <span class="value">${formattedDetailsTime}</span></div>
                         </div>
                     </div>
                     <div class="report-section"><h3>Tests Performed</h3>
-                        <ul class="test-list">${(entry.tests||[]).map(t => `<li><span>${t}</span><span style="font-weight:bold;color:#1a237e;">${formatPrice(perTestPrice)}</span></li>`).join('')}</ul>
-                        <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:2px solid #1a237e;text-align:right;"><strong style="font-size:1.1rem;">Total Amount: ${formatPrice(entry.total_amount)}</strong></div>
+                        <ul class="test-list">${(entry.tests||[]).map(t => `<li><span>${t}</span><span style="font-weight:bold;color:#1a237e;">${formatPrice(perTestPrice)}</span></li>`).join('')||'<li>No tests selected</li>'}</ul>
+                        <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:2px solid #1a237e;text-align:right;"><strong style="font-size:1.1rem;">Total Amount: ${formatPrice(entry.total_amount||0)}</strong></div>
                     </div>
                     <div class="report-section"><h3>Payment Details</h3>
                         <div class="report-grid">
-                            <div class="report-item"><strong>Method:</strong> <span class="value">${entry.payment_method}</span></div>
+                            <div class="report-item"><strong>Method:</strong> <span class="value">${entry.payment_method||'N/A'}</span></div>
                             <div class="report-item"><strong>Status:</strong> <span class="value">${entry.paid?'✅ Paid':'❌ Unpaid'}</span></div>
                         </div>
                     </div>
