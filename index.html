@@ -192,7 +192,7 @@
         .filter-group { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
         .filter-group select { padding: 0.5rem 0.8rem; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem; background: white; cursor: pointer; min-height: var(--touch-min); -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23546e7a' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.8rem center; padding-right: 2.2rem; }
 
-        /* ===== STICKER SHEET (thinner + clearer) ===== */
+        /* ===== STICKER SHEET ===== */
         .sticker-controls { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border); }
         .sticker-controls .control-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; }
         .sticker-controls .control-row .form-group { flex: 1 1 120px; min-width: 80px; }
@@ -2234,15 +2234,23 @@
             if (entry && entry.sample_date) {
                 const d = new Date(entry.sample_date + (entry.sample_time ? 'T' + entry.sample_time : 'T00:00'));
                 if (!isNaN(d.getTime())) {
-                    const datePart = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                    const timePart = entry.sample_time ? ' ' + entry.sample_time : '';
-                    return datePart + timePart;
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const month = months[d.getMonth()];
+                    const year = d.getFullYear();
+                    let label = `${day} ${month} ${year}`;
+                    if (entry.sample_time) { label += ` ${entry.sample_time.substring(0, 5)}`; }
+                    return label;
                 }
                 return entry.sample_date + (entry.sample_time ? ' ' + entry.sample_time : '');
             }
             if (entry && entry.created_at) {
                 const d = new Date(entry.created_at);
-                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                const day = String(d.getDate()).padStart(2, '0');
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const month = months[d.getMonth()];
+                const year = d.getFullYear();
+                return `${day} ${month} ${year}`;
             }
             return '';
         }
@@ -2282,7 +2290,7 @@
             }
         }
 
-        // Balanced thermal label PNG: thinner border, clear ID, no overlaps
+        // Generate a thermal-friendly label PNG with dynamic scaling
         function generateLabelPNG(sampleId, qrDataUrl, entry, sampleDateStr, isControl, callback) {
             const dpi = 300;
             const mmToPx = dpi / 25.4;
@@ -2317,7 +2325,7 @@
                 ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
                 const textX = qrAreaW + Math.round(labelW * 0.02);
-                const textW = labelW - textX - Math.round(labelW * 0.02);
+                const maxTextW = labelW - textX - Math.round(labelW * 0.02);
                 const typeLabel = isControl ? 'CONTROL' : 'PATIENT';
 
                 // SLIBTEC - black, bold
@@ -2334,20 +2342,26 @@
                 ctx.fillStyle = '#000000';
                 ctx.fillText('Diagnostic Lab', textX, Math.round(labelH * 0.32));
 
-                // Sample ID - own row, clear, black, bold
-                const idFontSize = Math.round(labelH * 0.095);
-                const idY = Math.round(labelH * 0.50);
+                // Sample ID - own row, clear, black, bold, dynamically scaled
+                let idFontSize = Math.round(labelH * 0.085);
                 ctx.font = `900 ${idFontSize}px 'Courier New', monospace`;
+                let idMetrics = ctx.measureText(sampleId);
+                if (idMetrics.width > maxTextW) {
+                    const ratio = maxTextW / idMetrics.width;
+                    idFontSize = Math.max(8, Math.floor(idFontSize * ratio));
+                    ctx.font = `900 ${idFontSize}px 'Courier New', monospace`;
+                }
+                const idY = Math.round(labelH * 0.50);
                 ctx.fillStyle = '#000000';
                 ctx.fillText(sampleId, textX, idY);
 
-                // Tag + date row (bottom) - no overlap
-                const tagFontSize = Math.round(labelH * 0.085);
+                // Tag + date row (bottom)
+                const tagFontSize = Math.round(labelH * 0.065);
                 const tagY = Math.round(labelH * 0.74);
                 ctx.font = `900 ${tagFontSize}px Arial, sans-serif`;
                 const tagMetrics = ctx.measureText(typeLabel);
-                const tagPaddingX = Math.round(labelH * 0.035);
-                const tagPaddingY = Math.round(labelH * 0.012);
+                const tagPaddingX = Math.round(labelH * 0.02);
+                const tagPaddingY = Math.round(labelH * 0.01);
                 const tagW = tagMetrics.width + tagPaddingX * 2;
                 const tagH = tagFontSize + tagPaddingY * 2;
                 ctx.fillStyle = '#000000';
@@ -2355,13 +2369,31 @@
                 ctx.fillStyle = '#ffffff';
                 ctx.fillText(typeLabel, textX + tagPaddingX, tagY + tagPaddingY);
 
-                // Sample collected date - black, single row, no wrap
-                const dateFontSize = Math.round(labelH * 0.080);
+                // Date - black, single row, dynamically scaled to avoid overlap
+                let dateFontSize = Math.round(labelH * 0.06);
                 ctx.font = `900 ${dateFontSize}px Arial, sans-serif`;
+                let dateMetrics = ctx.measureText(sampleDateStr);
+                const availableDateW = maxTextW - tagW - 10; // 10px gap
+                let finalDateText = sampleDateStr;
+
+                if (dateMetrics.width > availableDateW) {
+                    const ratio = availableDateW / dateMetrics.width;
+                    dateFontSize = Math.max(8, Math.floor(dateFontSize * ratio));
+                    ctx.font = `900 ${dateFontSize}px Arial, sans-serif`;
+                    dateMetrics = ctx.measureText(finalDateText);
+                    
+                    if (dateMetrics.width > availableDateW) {
+                        while (ctx.measureText(finalDateText + '…').width > availableDateW && finalDateText.length > 3) {
+                            finalDateText = finalDateText.slice(0, -1);
+                        }
+                        finalDateText += '…';
+                    }
+                }
+                
                 ctx.fillStyle = '#000000';
                 ctx.textAlign = 'right';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(sampleDateStr, labelW - Math.round(labelW * 0.02), tagY + tagH / 2);
+                ctx.fillText(finalDateText, labelW - Math.round(labelW * 0.02), tagY + tagH / 2);
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
 
@@ -2425,7 +2457,7 @@
         }
 
         // ============================================================
-        // PRINT QR CODE — thinner border, clear ID, no overlap
+        // PRINT QR CODE
         // ============================================================
         function printQRCode(sampleId) {
             if (!window._currentQRData) { showToast('No QR data available', 'error'); return; }
@@ -2509,7 +2541,8 @@
                             letter-spacing: 0.05mm;
                             max-width: 100%;
                             white-space: nowrap;
-                            overflow: visible;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
                             line-height: 1.1;
                         }
                         .qr-right .meta-row {
@@ -2520,6 +2553,7 @@
                             gap: 0.6mm;
                             flex-wrap: nowrap;
                             margin-top: 0.2mm;
+                            min-width: 0;
                         }
                         .qr-right .type-tag {
                             font-size: 1.5mm;
@@ -2540,6 +2574,7 @@
                             flex-shrink: 1;
                             overflow: hidden;
                             text-overflow: ellipsis;
+                            min-width: 0;
                             text-align: right;
                             letter-spacing: 0.05mm;
                         }
@@ -2747,10 +2782,10 @@
             textDiv.innerHTML = `
                 <div style="font-size:${brandSize}mm;font-weight:900;color:${color};letter-spacing:0.2mm;line-height:1.05;">SLIBTEC</div>
                 <div style="font-size:${subSize}mm;color:${color};font-weight:900;letter-spacing:0.1mm;line-height:1.05;">Diagnostic Lab</div>
-                <div style="font-size:${idSize}mm;color:${color};font-weight:900;font-family:'Courier New',monospace;white-space:nowrap;overflow:visible;line-height:1.15;letter-spacing:0;max-width:100%;">${sampleId}</div>
-                <div style="display:flex;justify-content:space-between;align-items:center;width:100%;gap:0.5mm;margin-top:0.2mm;">
+                <div style="font-size:${idSize}mm;color:${color};font-weight:900;font-family:'Courier New',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15;letter-spacing:0;max-width:100%;">${sampleId}</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;width:100%;gap:0.5mm;margin-top:0.2mm;min-width:0;">
                     <span style="font-size:${tagSize}mm;color:#ffffff;background:${color};padding:0.1mm 1mm;border-radius:0.4mm;font-weight:900;letter-spacing:0.2mm;white-space:nowrap;flex-shrink:0;">${typeLabel}</span>
-                    <span style="font-size:${dateSize}mm;color:${color};font-weight:900;letter-spacing:0.05mm;white-space:nowrap;">${sampleDateStr}</span>
+                    <span style="font-size:${dateSize}mm;color:${color};font-weight:900;letter-spacing:0.05mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;text-align:right;">${sampleDateStr}</span>
                 </div>
             `;
             sticker.appendChild(qrDiv);
